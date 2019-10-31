@@ -15,7 +15,7 @@ config = {
     'url': about["__gitrepo__"],
     'download_url': about["__pkgrepo__"],
     'version': about["__version__"],
-    'packages': ['aws', 'engine'],
+    'packages': ['aws', 'spp.engine'],
     'scripts': [''],
     'name': 'spp_engine',
     'install_requires': [''],
