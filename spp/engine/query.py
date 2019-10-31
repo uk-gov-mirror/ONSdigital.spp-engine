@@ -20,7 +20,7 @@ class Query:
         if select is None:
             sel = "*"
         elif isinstance(select, list):
-            sel = ", ".join(list)
+            sel = ", ".join(select)
         else:
             sel = select
         return sel
@@ -28,9 +28,9 @@ class Query:
     def handle_where(self, where):
         if where is not None and isinstance(where, dict):
             clause_list = []
-            for k,v in where.items():
-                clause_list.append("{} {} {} AND".format(k, v["condition"], v["value"]))
-            return " AND ".join(clause_list)
+            for k, v in where.items():
+                clause_list.append("{} {} {}".format(k, v["condition"], v["value"]))
+            return " AND ".join(clause_list).rstrip(" AND ")
         else:
             return None
 
@@ -38,5 +38,5 @@ class Query:
         tmp = "SELECT {} FROM {}.{}".format(self.handle_select(select), database,table)
         where_clause = self.handle_where(where)
         if where_clause is not None:
-            tmp + " WHERE {}".format(where_clause)
+            tmp += " WHERE {}".format(where_clause)
         self.query = tmp + ";"
