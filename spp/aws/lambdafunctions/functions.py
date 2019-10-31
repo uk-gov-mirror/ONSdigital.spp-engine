@@ -4,7 +4,7 @@ import json
 from message_utils import is_valid_json, send_message_sqs
 
 
-logger = logging.logger(__name__)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
