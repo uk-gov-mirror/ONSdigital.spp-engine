@@ -1,4 +1,4 @@
-from spp.aws.lambdafunctions.message_utils import is_valid_json
+from spp.aws.lambdafunctions.message_utils import is_valid_json, write_queue
 
 
 valid_schema = {
@@ -86,3 +86,37 @@ def test_garbled_json():
     }
 
     assert not is_valid_json(instance, valid_schema)
+
+
+def test_write_queue_working_implementation():
+
+    resource = "https://link/to/queue:0000"
+    event = {
+        "method1": {
+            "param1": 1,
+            "param2": "2"
+        }
+    }
+
+    def implementation(resource, event):
+        return {resource: event}
+
+    response = write_queue(implementation, resource, event)
+    assert response == {resource: event}
+
+
+def test_write_queue_exception_raised():
+
+    resource = "https://link/to/queue:0000"
+    event = {
+        "method1": {
+            "param1": 1,
+            "param2": "2"
+        }
+    }
+
+    def implementation(resource, event):
+        raise Exception("broken implementation")
+
+    response = write_queue(implementation, resource, event)
+    assert response == {'Exception': 'Message not sent', 'Reason': 'broken implementation'}
