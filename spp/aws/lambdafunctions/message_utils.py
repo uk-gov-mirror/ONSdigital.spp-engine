@@ -35,25 +35,35 @@ def is_valid_json(instance, schema):
         return True
 
 
-def send_message_sqs(sqs_queue, event):
+def write_queue(vendor_implementation, queue_resource, event):
 
     """
-    Calls the boto3 client library to send a message to an SQS queue. Exceptions are logged, but not raised.
+    Calls a given implementation to write to a message queue. Exceptions are logged, but not raised.
+    :param vendor_implementation: Function that implements queue write
+    :param queue_resource: Resource link for queue
+    :param event: JSON message to write
+    :returns response: Dictionary with queue response or error message
+    """
+
+    logging.info(f"Writing to {queue_resource}")
+    try:
+        response = vendor_implementation(queue_resource, event)
+    except Exception as ex:
+        logging.exception("Exception during message send")
+        return {"Exception": "Message not sent", "Reason": str(ex)}
+    else:
+        logging.info(f"Response: {response}")
+        return response
+
+
+def write_queue_sqs(sqs_queue, event):
+
+    """
+    Calls the boto3 client library to send a message to an SQS queue.
     :param sqs_queue: URL for SQS queue
     :param event: JSON message to write
     :returns response: Dictionary with SQS response or error message
     """
 
-    logging.info(f"Writing to {sqs_queue}")
     client = boto3.client('sqs')
-
-    try:
-        response = client.send_message(
-            QueueUrl=sqs_queue,
-            MessageBody=json.dumps(event))
-    except Exception as ex:
-        logging.exception("SQS Exception during message send")
-        return {"Exception": "Message not sent", "Reason": str(ex)}
-    else:
-        logging.info(f"Response: {response}")
-        return response
+    return client.send_message(QueueUrl=sqs_queue, MessageBody=json.dumps(event))

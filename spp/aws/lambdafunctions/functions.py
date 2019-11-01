@@ -1,32 +1,36 @@
 import os
 import logging
 import json
-from message_utils import is_valid_json, send_message_sqs
+from message_utils import is_valid_json, write_queue
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def write_sqs(event, context=None):
+def write_queue_handler(event, context=None):
 
     """
-    Writes the event JSON to an Amazon SQS queue. Exceptions are logged, but not raised. Configuration is driven by
-    environment variables SQS_QUEUE and VALID_SCHEMA.
+    Writes the event JSON to a message queue. Environment variables drive the variation.
     :param event: JSON message to be written
-    :param context: Lambda context dictionary
-    :returns response: Dictionary with SQS response or error message
+    :param context: Context dictionary
+    :key QUEUE: Env-var with link to queue resource
+    :key SCHEMA: Env-var with JSON format string with schema definition
+    :key IMP_MODULE: Env-var with dot-delimited path to module of message queue write implementation
+    :key IMP_METHOD: Env-var with name of implementing method
+    :returns response: Dictionary with queue response or error message
     """
     
     # Get environment objects
-    sqs_queue = os.environ['SQS_QUEUE']  # Environment variable with URL string
-    valid_schema = json.loads(os.environ['VALID_SCHEMA'])  # Environment variable with JSON-format string
-    
+    queue = os.environ['QUEUE']
+    schema = json.loads(os.environ['SCHEMA'])
+    imp_module = __import__(os.environ['IMP_MODULE'])
+    imp_function = getattr(imp_module, os.environ['IMP_METHOD'])
+
     # Check JSON schema against expected shape
-    if not is_valid_json(event, valid_schema):
-                return {"Exception": "Message not sent", "Reason": "JSON validation failed"}
+    if not is_valid_json(event, schema):
+        return {"Exception": "Message not sent", "Reason": "JSON validation failed"}
     
     # Send message to SQS
-    response = send_message_sqs(sqs_queue, event)
-    
+    response = write_queue(imp_function, queue, event)
     return response
