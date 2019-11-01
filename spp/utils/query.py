@@ -16,7 +16,6 @@ class Query:
         return self.query
 
     def handle_select(self, select):
-        sel = None
         if select is None:
             sel = "*"
         elif isinstance(select, list):

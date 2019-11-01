@@ -7,7 +7,7 @@
 #  6. Has database and table single select single where
 #  7. has database and table list select list where
 
-from spp.engine.query import Query
+from utils.query import Query
 
 
 def test_db_and_table():
