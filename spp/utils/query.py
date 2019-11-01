@@ -20,7 +20,7 @@ class Query:
         return self.query
 
     def _handle_select(self, select):
-        """ Function to generate select statements if None default to select all: '*'. """
+        """ Method to generate select statements if None default to select all: '*'. """
         if select is None:
             sel = "*"
         elif isinstance(select, list):
@@ -30,7 +30,7 @@ class Query:
         return sel
 
     def _handle_where(self, where):
-        """ Function to generate where statements form map"""
+        """ Method to generate where statements form map"""
         if where is not None and isinstance(where, dict):
             clause_list = []
             for k, v in where.items():
@@ -40,7 +40,7 @@ class Query:
             return None
 
     def _formulate_query(self, database, table, select, where):
-        """ Function to create the query string and set the query value this is called by the constructor """
+        """ Method to create the query string and set the query value this is called by the constructor """
         tmp = "SELECT {} FROM {}.{}".format(self._handle_select(select), database,table)
         where_clause = self._handle_where(where)
         if where_clause is not None:
