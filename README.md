@@ -1,2 +1,2 @@
-# spp-engine
-Statistical Processing Pipeline engine
+# spp-spp.engine
+Statistical Processing Pipeline spp.engine
