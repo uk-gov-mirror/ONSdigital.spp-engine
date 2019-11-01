@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def write_queue_handler(event, context=None):
+def handler(event, context=None):
 
     """
     Writes the event JSON to a message queue. Environment variables drive the variation.
