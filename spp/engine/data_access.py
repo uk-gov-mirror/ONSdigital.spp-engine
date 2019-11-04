@@ -30,7 +30,7 @@ class DataAccess:
             return
 
 
-def write_data(self, output, platform, spark=None):
+def write_data(output, platform, spark=None):
     """
     This method may be removed as further requirements determine whether this should be a generic function
     :param output: Dataframe

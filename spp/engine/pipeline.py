@@ -58,7 +58,6 @@ class PipelineMethod:
             write_data(outputs)
 
 
-
 class Pipeline:
     """
     Wrapper to contain the pipeline methods and enable their callling
