@@ -43,7 +43,7 @@ def read_file(location, spark=None):
     logger.info(f"Reading from file")
     logger.info(f"Location: {location}")
     if spark:
-        return spark.read.load(location, format=format)
+        return spark.read.load(location, format=file_format)
     else:
         import s3fs
         return getattr(__import__('pandas'), f'read_{file_format}')(location)
