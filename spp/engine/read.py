@@ -1,6 +1,7 @@
 import pandas as pd
 from spp.engine.query import Query
 import logging
+import importlib
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def pandas_read(cursor, connection=None):
     # Otherwise, treat as file location
     else:
         _file_log(cursor)
-        return getattr(__import__('pandas'), f'read_{_get_file_format(cursor)}')(cursor)
+        return getattr(importlib.import_module('pandas'), f'read_{_get_file_format(cursor)}')(cursor)
 
 
 def _get_file_format(location):
