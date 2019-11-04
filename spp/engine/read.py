@@ -50,5 +50,5 @@ def read_file(location, spark=None):
     if spark:
         return spark.read.load(location, format=file_format)
     else:
-        import s3fs
+        import s3fs  # Leave this in to check optional dependency explicitly
         return getattr(__import__('pandas'), f'read_{file_format}')(location)
