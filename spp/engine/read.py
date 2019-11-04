@@ -1,6 +1,5 @@
-from pyspark.sql import SparkSession
-from .query import Query
 import pandas as pd
+from spp.engine.query import Query
 import logging
 
 
@@ -8,47 +7,61 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def read_db(connection, database, table, select=None, where=None, keep_semicolon=False):
+def spark_read(spark, cursor):
 
     """
-    Reads a DataFrame from a database connected to the Spark metastore or a connection object.
-    :param connection: Spark session or DB connection object
-    :param database: Database name
-    :param table: Table name
-    :param select: Column or [columns] to select
-    :param where: Filter condition
-    :param keep_semicolon: If True, query is generated with a semicolon suffix
-    :returns Spark/Pandas DataFrame:
+    Reads data into a DataFrame using Spark. If the cursor is an SPP Query, the Spark metastore is used,
+    otherwise the cursor is treated like a file path String.
+    :param spark: Spark session
+    :param cursor: Query object or file location String
+    :returns Spark DataFrame:
     """
 
-    # TODO: Look into whether the semicolon is ever necessary
-    query = str(Query(database, table, select, where))
-    query = query if keep_semicolon else query[:-1]
+    # If cursor looks like query
+    if isinstance(cursor, Query):
+        _db_log(str(cursor)[:-1], spark)
+        return spark.sql(str(cursor)[:-1])
 
-    logger.info(f"Reading from {database} database")
-    logger.info(f"Query: {query}")
-    logger.info(f"Connection: {str(connection)}")
-
-    if isinstance(connection, SparkSession):
-        return connection.sql(query)
+    # Otherwise, treat as file location
     else:
-        return pd.read_sql(query, connection)
+        _file_log(cursor)
+        return spark.read.load(cursor, format=_get_file_format(cursor))
 
 
-def read_file(location, spark=None):
+def pandas_read(cursor, connection=None):
 
     """
-    Reads a DataFrame from a file.
-    :param location: File location
-    :param spark: If not None, use Spark
-    :returns Spark/Pandas DataFrame:
+    Reads data into a DataFrame using Pandas. If the cursor string is query-like, a database is queried and a
+    connection object must be supplied, otherwise the cursor string is treated like a file path.
+    :param connection: DB connection object
+    :param cursor: String representing query or file location
+    :returns Pandas DataFrame:
     """
 
-    file_format = location.split('.')[-1]  # cvs, json, parquet...
+    # If cursor looks like query
+    if isinstance(cursor, Query):
+        _db_log(str(cursor)[:-1], connection)
+        if connection:
+            return pd.read_sql(str(cursor)[:-1], connection)
+        else:
+            raise Exception('Cursor is query-like, but no connection object given')
+
+    # Otherwise, treat as file location
+    else:
+        _file_log(cursor)
+        return getattr(__import__('pandas'), f'read_{_get_file_format(cursor)}')(cursor)
+
+
+def _get_file_format(location):
+    return location.split('.')[-1]
+
+
+def _db_log(cursor, connection):
+    logger.info(f"Reading from database")
+    logger.info(f"Query: {cursor}")
+    logger.info(f"Connection: {connection}")
+
+
+def _file_log(cursor):
     logger.info(f"Reading from file")
-    logger.info(f"Location: {location}")
-    if spark:
-        return spark.read.load(location, format=file_format)
-    else:
-        import s3fs  # Leave this in to check optional dependency explicitly
-        return getattr(__import__('pandas'), f'read_{file_format}')(location)
+    logger.info(f"Location: {cursor}")
