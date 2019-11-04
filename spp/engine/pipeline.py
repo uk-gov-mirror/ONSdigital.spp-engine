@@ -57,12 +57,12 @@ class PipelineMethod:
 
     def __init__(self, name, module, package, queries, params=None):
         """
-
-        :param name:
-        :param module:
-        :param package:
-        :param queries:
-        :param params:
+        Initialise the attributes of the class
+        :param name: String
+        :param module: String
+        :param package: String
+        :param queries: list[spp.utils.query.Query]
+        :param params: Dict[String, Any]
         """
         self.method_name = name
         self.module_name = module
@@ -136,7 +136,7 @@ class Pipeline:
         :param module: String
         :param package: String
         :param queries: List[spp.utils.query.Query]
-        :param params: Dict[string, value]
+        :param params: Dict[string, Any]
         :return:
         """
         self.methods.append(PipelineMethod(name, module, package, queries, params))
