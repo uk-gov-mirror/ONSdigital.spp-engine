@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def read_db(connection, database, table, select=None, where=None):
+def read_db(connection, database, table, select=None, where=None, keep_semicolon=False):
 
     """
     Reads a DataFrame from a database connected to the Spark metastore or a connection object.
@@ -17,13 +17,18 @@ def read_db(connection, database, table, select=None, where=None):
     :param table: Table name
     :param select: Column or [columns] to select
     :param where: Filter condition
+    :param keep_semicolon: If True, query is generated with a semicolon suffix
     :returns Spark/Pandas DataFrame:
     """
 
+    # TODO: Look into whether the semicolon is ever necessary
     query = str(Query(database, table, select, where))
+    query = query if keep_semicolon else query[:-1]
+
     logger.info(f"Reading from {database} database")
     logger.info(f"Query: {query}")
     logger.info(f"Connection: {str(connection)}")
+
     if isinstance(connection, SparkSession):
         return connection.sql(query)
     else:
