@@ -126,9 +126,6 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def create_spark_session(self, name):
-
-
     def add_pipeline_methods(self, name, module, package, queries, params):
         """
         Adds a new method to the pipeline
