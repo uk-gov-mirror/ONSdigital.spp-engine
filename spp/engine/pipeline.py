@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Iterable
+from pyspark.sql import SparkSession
 
 import importlib
 
@@ -73,7 +74,7 @@ class PipelineMethod:
 
     def run(self, platform, spark=None):
         """
-        
+        Will import the method and call it.  It will then write out the outputs
         :param platform:
         :param spark:
         :return:
@@ -104,41 +105,47 @@ class PipelineMethod:
 
 
 class Pipeline:
-
+    """
+    Wrapper to contain the pipeline methods and enable their callling
+    """
     platform = None
-    is_spark = None
     name = None
     methods = None
+    spark = None
 
     def __init__(self, name, platform=Platform.AWS, is_spark=False):
         """
-
+        Initialises the attributes of the class.
         :param name:
-        :param platform:
-        :param is_spark:
+        :param platform: Platform
+        :param is_spark: Boolean
         """
         self.name = name
         self.platform = platform
-        self.is_spark = is_spark
+        if is_spark:
+            self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def set_pipeline_methods(self, name, module, package, queries, params):
-        """
+    def create_spark_session(self, name):
 
-        :param name:
-        :param module:
-        :param package:
-        :param queries:
-        :param params:
+
+    def add_pipeline_methods(self, name, module, package, queries, params):
+        """
+        Adds a new method to the pipeline
+        :param name: String
+        :param module: String
+        :param package: String
+        :param queries: List[spp.utils.query.Query]
+        :param params: Dict[string, value]
         :return:
         """
         self.methods.append(PipelineMethod(name, module, package, queries, params))
 
     def run(self, platform, spark):
         """
-
-        :param platform:
-        :param spark:
+        Runs the methods of the pipeline
+        :param platform: Platform
+        :param spark: SparkSession
         :return:
         """
         for method in self.methods:
