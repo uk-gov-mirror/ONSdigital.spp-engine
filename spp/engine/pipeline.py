@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Iterable
 from pyspark.sql import SparkSession
+from engine.data_access import write_data
 
 import importlib
 
@@ -10,38 +11,6 @@ class Platform(Enum):
     Enum that indicates which platform the Pipeline will run on currently only AWS but planned are GCP and Azure
     """
     AWS = 1
-
-
-class DataAccess:
-    """
-    Wrapper that calls the differing Data Access methods depending on the platform that the pipeline is running on and
-    whether it is utilising Apache Spark or is a pure python project
-    """
-
-    query = None
-
-    def __int__(self, query):
-        """
-        Takes in the Query object that is used to access the data
-        :param query: spp.utils.query.Query
-        :return:
-        """
-        self.query = query
-
-    def get_data(self, platform, spark=None):
-        """
-        Will call the specific data retrieval method depending on the Platform and whether it is spark or not
-        using the query supplies when instantiation the class.
-        :param platform: Platform
-        :param spark: SparkSession
-        :return:
-        """
-        if spark is None:
-            # TODO import the correct data access class and call get data to return in
-            return
-        else:
-            # TODO spark version of the above
-            return
 
 
 class PipelineMethod:
@@ -84,24 +53,10 @@ class PipelineMethod:
         outputs = getattr(module, self.method_name)(*inputs, **self.params)
         if isinstance(outputs, Iterable):
             for output in outputs:
-                self._write_data(output)
+                write_data(output)
         else:
-            self._write_data(outputs)
+            write_data(outputs)
 
-    def _write_data(self, output, platform, spark=None):
-        """
-        This method may be removed as further requirements determine whether this should be a generic function
-        :param output: Dataframe
-        :param platform: Platform
-        :param spark: SparkSession
-        :return:
-        """
-        if spark is None:
-            # TODO write outputs
-            return
-        else:
-            # TODO Spark Version
-            return
 
 
 class Pipeline:
