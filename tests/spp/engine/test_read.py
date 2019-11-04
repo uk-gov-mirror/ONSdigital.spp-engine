@@ -1,27 +1,19 @@
 from spp.engine.read import read_db, read_file
-from pyspark.sql import SparkSession
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
 
-def test_spark_read_db():
+def test_spark_read_db(spark_test_session):
 
-    spark = SparkSession.builder.appName('Test').master('local').getOrCreate()
-    df = spark.read.csv('./tests/resources/data/dummy.csv')
+    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
     df.createOrReplaceGlobalTempView('view')
-
-    assert read_db(spark, 'global_temp', 'view', '*').collect() == df.collect()
-
-
-def test_spark_read_file():
-
-    spark = SparkSession.builder.appName('Pytest').master('local').getOrCreate()
-    df = spark.read.csv('./tests/resources/data/dummy.csv')
-    df.show()
-    read_file('./tests/resources/data/dummy.csv', spark).show()
+    assert read_db(spark_test_session, 'global_temp', 'view', '*').collect() == df.collect()
 
 
-    assert read_file('./tests/resources/data/dummy.csv', spark).collect() == df.collect()
+def test_spark_read_file(spark_test_session):
+
+    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
+    assert read_file('./tests/resources/data/dummy.csv', spark_test_session).collect() == df.collect()
 
 
 def test_pandas_read_file():
