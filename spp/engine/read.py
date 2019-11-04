@@ -20,7 +20,7 @@ def read_db(connection, database, table, select=None, where=None):
     :returns Spark/Pandas DataFrame:
     """
 
-    query = Query.formulate_query(database, table, select, where)
+    query = str(Query(database, table, select, where))
     logger.info(f"Reading from {database} database")
     logger.info(f"Query: {query}")
     logger.info(f"Connection: {str(connection)}")
