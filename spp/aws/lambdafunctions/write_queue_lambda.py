@@ -1,7 +1,7 @@
 import os
 import logging
 import json
-from message_utils import is_valid_json, write_queue
+from spp.engine.messaging import is_valid_json, write_queue
 
 
 logger = logging.getLogger(__name__)
