@@ -24,22 +24,21 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, package, queries, params=None):
+    def __init__(self, name, module, queries, params=None):
         """
         Initialise the attributes of the class
         :param name: String
         :param module: String
         :param package: String
-        :param queries: list[spp.utils.query.Query]
+        :param queries: Dict[String, spp.utils.query.Query]
         :param params: Dict[String, Any]
         """
         self.method_name = name
         self.module_name = module
-        self.package = package
         self.params = params
         self.data_in = []
-        for query in queries:
-            self.data_in.append(DataAccess(query))
+        for query_name, query in queries.items():
+            self.data_in.append(DataAccess(query_name, query))
 
     def run(self, platform, spark=None):
         """
@@ -48,14 +47,14 @@ class PipelineMethod:
         :param spark:
         :return:
         """
-        inputs = [data.get_data(platform, spark) for data in self.data_in]
-        module = importlib.import_module(self.module_name, self.package)
-        outputs = getattr(module, self.method_name)(*inputs, **self.params)
+        inputs = {data.name: data.read_data(platform, spark) for data in self.data_in}
+        module = importlib.import_module(self.module_name)
+        outputs = getattr(module, self.method_name)(**inputs, **self.params)
         if isinstance(outputs, Iterable):
             for output in outputs:
-                write_data(output)
+                write_data(output, platform, spark)
         else:
-            write_data(outputs)
+            write_data(outputs, platform, spark)
 
 
 class Pipeline:
@@ -80,19 +79,19 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, package, queries, params):
+    def add_pipeline_methods(self, name, module, queries, params):
         """
         Adds a new method to the pipeline
         :param name: String
         :param module: String
         :param package: String
-        :param queries: List[spp.utils.query.Query]
-        :param params: Dict[string, Any]
+        :param queries: Dict[String, spp.utils.query.Query]
+        :param params: Dict[String, Any]
         :return:
         """
-        self.methods.append(PipelineMethod(name, module, package, queries, params))
+        self.methods.append(PipelineMethod(name, module, queries, params))
 
-    def run(self, platform, spark):
+    def run(self, platform):
         """
         Runs the methods of the pipeline
         :param platform: Platform
@@ -100,4 +99,4 @@ class Pipeline:
         :return:
         """
         for method in self.methods:
-            method.run(platform, spark)
+            method.run(platform, self.spark)
