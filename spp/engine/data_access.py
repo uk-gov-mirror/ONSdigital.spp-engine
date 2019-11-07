@@ -5,16 +5,19 @@ class DataAccess:
     """
 
     query = None
+    name = None
 
-    def __int__(self, query):
+    def __int__(self, name, query):
         """
         Takes in the Query object that is used to access the data
+        :param name: String
         :param query: spp.utils.query.Query
         :return:
         """
         self.query = query
+        self.name - name
 
-    def get_data(self, platform, spark=None):
+    def read_data(self, platform, spark=None):
         """
         Will call the specific data retrieval method depending on the Platform and whether it is spark or not
         using the query supplies when instantiation the class.
