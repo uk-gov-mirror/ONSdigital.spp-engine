@@ -3,10 +3,9 @@ from typing import Iterable
 from pyspark.sql import SparkSession
 from engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
-
 import importlib
 
-LOG = Logger("spp-pipeline").get()
+LOG = Logger(__name__).get()
 
 
 class Platform(Enum):

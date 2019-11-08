@@ -1,11 +1,10 @@
 import pandas as pd
 from spp.utils.query import Query
-import logging
+from spp.utils.logging import Logger
 import importlib
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOG = Logger(__name__).get()
 
 
 def spark_read(spark, cursor, **kwargs):
@@ -59,11 +58,11 @@ def _get_file_format(location):
 
 
 def _db_log(cursor, connection):
-    logger.info(f"Reading from database")
-    logger.info(f"Query: {cursor}")
-    logger.info(f"Connection: {connection}")
+    LOG.info(f"Reading from database")
+    LOG.info(f"Query: {cursor}")
+    LOG.info(f"Connection: {connection}")
 
 
 def _file_log(cursor):
-    logger.info(f"Reading from file")
-    logger.info(f"Location: {cursor}")
+    LOG.info(f"Reading from file")
+    LOG.info(f"Location: {cursor}")

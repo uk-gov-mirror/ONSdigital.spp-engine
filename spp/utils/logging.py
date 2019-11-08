@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 
 class Logger(object):
@@ -8,12 +9,12 @@ class Logger(object):
     """
     def __init__(self, name):
         logger = logging.getLogger("uk.gov.ons.%s" % name)
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(os.getenv('LOGGING_LEVEL', logging.INFO))
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         stdout_handler = logging.StreamHandler(sys.stdout)
         stdout_handler.setFormatter(formatter)
-        stdout_handler.setLevel(logging.DEBUG)
+        stdout_handler.setLevel(os.getenv('LOGGING_LEVEL', logging.INFO))
         logger.addHandler(stdout_handler)
         self._logger = logger
 
