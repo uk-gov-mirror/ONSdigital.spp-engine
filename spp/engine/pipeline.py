@@ -63,6 +63,7 @@ class PipelineMethod:
             raise e
         LOG.info("Calling Method")
         try:
+            LOG.debug("Calling Method: {} with parameters {} {}".format(self.method_name, inputs, self.params))
             outputs = getattr(module, self.method_name)(**inputs, **self.params)
         except TypeError as e:
             LOG.error("Incorrect Parameters for method called.")
