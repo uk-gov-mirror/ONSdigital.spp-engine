@@ -3,3 +3,5 @@ pyspark==2.4.4
 mock==3.0.5
 numpy==1.17.3
 pandas==0.25.3
+boto3==1.10.13
+s3fs==0.3.5
