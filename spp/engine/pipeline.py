@@ -13,7 +13,7 @@ class Platform(Enum):
     """
     Enum that indicates which platform the Pipeline will run on currently only AWS but planned are GCP and Azure
     """
-    AWS = 1
+    AWS = "AWS"
 
 
 class PipelineMethod:
