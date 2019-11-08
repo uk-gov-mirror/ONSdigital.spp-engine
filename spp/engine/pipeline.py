@@ -58,20 +58,20 @@ class PipelineMethod:
             module = importlib.import_module(self.module_name)
             LOG.debug("Imported {}".format(module))
         except Exception as e:
-            LOG.exception("Cant import module {}".format(self.module_name), e)
+            LOG.exception("Cant import module {}".format(self.module_name))
             raise e
         LOG.info("Calling Method")
         try:
             LOG.debug("Calling Method: {} with parameters {} {}".format(self.method_name, inputs, self.params))
             outputs = getattr(module, self.method_name)(**inputs, **self.params)
         except TypeError as e:
-            LOG.exception("Incorrect Parameters for method called.", e)
+            LOG.exception("Incorrect Parameters for method called.")
             raise e
         except ValueError as e:
-            LOG.exception("Issue with getting parameter name.", e)
+            LOG.exception("Issue with getting parameter name.")
             raise e
         except Exception as e:
-            LOG.exception("Issue calling method", e)
+            LOG.exception("Issue calling method")
             raise e
         LOG.info("Writing outputs")
         LOG.debug("Writing outputs: {}".format(outputs))
