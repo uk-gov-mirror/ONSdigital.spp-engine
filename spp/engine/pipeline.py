@@ -2,8 +2,11 @@ from enum import Enum
 from typing import Iterable
 from pyspark.sql import SparkSession
 from engine.data_access import write_data, DataAccess
+from spp.utils.logging import Logger
 
 import importlib
+
+LOG = Logger("spp-pipeline").get()
 
 
 class Platform(Enum):
@@ -18,7 +21,6 @@ class PipelineMethod:
     Wrapper that contains the metadata for a pipeline method that will be called as part of a pipeline
     """
 
-    package = None
     module_name = None
     method_name = None
     params = None
@@ -29,10 +31,10 @@ class PipelineMethod:
         Initialise the attributes of the class
         :param name: String
         :param module: String
-        :param package: String
         :param queries: Dict[String, spp.utils.query.Query]
         :param params: Dict[String, Any]
         """
+        LOG.info("Initializing Method")
         self.method_name = name
         self.module_name = module
         self.params = params
@@ -47,14 +49,43 @@ class PipelineMethod:
         :param spark:
         :return:
         """
+        LOG.info("Retrieving data")
         inputs = {data.name: data.read_data(platform, spark) for data in self.data_in}
-        module = importlib.import_module(self.module_name)
-        outputs = getattr(module, self.method_name)(**inputs, **self.params)
+        LOG.info("Data Retrieved")
+        LOG.debug("Retrieved data : {}".format(inputs))
+        LOG.info("Importing Module")
+        try:
+            module = importlib.import_module(self.module_name)
+            LOG.debug("Imported {}".format(module))
+        except Exception as e:
+            LOG.error("Cant import module {}".format(self.module_name))
+            LOG.exception(e)
+            raise e
+        LOG.info("Calling Method")
+        try:
+            outputs = getattr(module, self.method_name)(**inputs, **self.params)
+        except TypeError as e:
+            LOG.error("Incorrect Parameters for method called.")
+            LOG.exception(e)
+            raise e
+        except ValueError as e:
+            LOG.error("Issue with getting parameter name.")
+            LOG.exception(e)
+            raise e
+        except Exception as e:
+            LOG.error("Issue calling method")
+            LOG.exception(e)
+            raise e
+        LOG.info("Writing outputs")
+        LOG.debug("Writing outputs: {}".format(outputs))
         if isinstance(outputs, Iterable):
             for output in outputs:
                 write_data(output, platform, spark)
+                LOG.debug("Writing output: {}".format(output))
         else:
             write_data(outputs, platform, spark)
+            LOG.debug("Writing output: {}".format(outputs))
+        LOG.info("Finished writing outputs Method run complete")
 
 
 class Pipeline:
@@ -73,9 +104,11 @@ class Pipeline:
         :param platform: Platform
         :param is_spark: Boolean
         """
+        LOG.info("Initializing Pipeline")
         self.name = name
         self.platform = platform
         if is_spark:
+            LOG.info("Starting Spark Session for APP {}".format(name))
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
@@ -84,19 +117,25 @@ class Pipeline:
         Adds a new method to the pipeline
         :param name: String
         :param module: String
-        :param package: String
         :param queries: Dict[String, spp.utils.query.Query]
         :param params: Dict[String, Any]
         :return:
         """
+        LOG.info("Adding Method to Pipeline")
+        LOG.debug("Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}.".format(name,
+                                                                                                            module,
+                                                                                                            params,
+                                                                                                            queries))
         self.methods.append(PipelineMethod(name, module, queries, params))
 
     def run(self, platform):
         """
         Runs the methods of the pipeline
         :param platform: Platform
-        :param spark: SparkSession
         :return:
         """
+        LOG.info("Running Pipeline: {}".format(self.name))
         for method in self.methods:
+            LOG.info("Running Method: {}".format(method.method_name))
             method.run(platform, self.spark)
+            LOG.info("Method Finished: {}".format(method.method_name))
