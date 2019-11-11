@@ -8,6 +8,24 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+class PandasReader:
+
+    def read_connection(self, cursor):
+        return NotImplementedError('Abstract method.')
+
+
+    def read_file(self, cursor, **kwargs):
+        return getattr(importlib.import_module('pandas'), f'read_{_get_file_format(cursor)}')(cursor, **kwargs)
+
+
+class PandasAthenaReader(PandasReader):
+
+    def read_connection(self, cursor):
+        import awswrangler
+        session = awswrangler.Session()
+        return session.pandas.read_sql_athena(sql=str(cursor)[:-1])
+
+
 def spark_read(spark, cursor, **kwargs):
 
     """
