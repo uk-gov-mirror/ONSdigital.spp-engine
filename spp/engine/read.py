@@ -1,4 +1,3 @@
-import pandas as pd
 from spp.engine.query import Query
 import logging
 import importlib
@@ -10,11 +9,18 @@ logger.setLevel(logging.INFO)
 
 class PandasReader:
 
-    def read_db(self, cursor):
+    def read_db(self, query):
+        """ To be implemented by child classes """
         raise NotImplementedError('Abstract method.')
 
-    def read_file(self, cursor, **kwargs):
-        return getattr(importlib.import_module('pandas'), f'read_{_get_file_format(cursor)}')(cursor, **kwargs)
+    def read_file(self, path, **kwargs):
+        """
+        Reads a file from a file path into a Pandas DataFrame. Selects the Pandas read method from the file extension.
+        :param path: String representing file path
+        :param kwargs: Other keyword arguments to pass to pd.read{format}()
+        :returns Pandas DataFrame:
+        """
+        return getattr(importlib.import_module('pandas'), f'read_{_get_file_format(path)}')(path, **kwargs)
 
     def __repr__(self):
         return 'PandasReader'
@@ -22,7 +28,12 @@ class PandasReader:
 
 class PandasAthenaReader(PandasReader):
 
-    def read_db(self, cursor):
+    def read_db(self, query):
+        """
+        Reads an Athena table into a Pandas DataFrame using an SQL query.
+        :param query: SQL String compatible with AWS Athena
+        :returns Pandas DataFrame:
+        """
         import awswrangler
         session = awswrangler.Session()
         return session.pandas.read_sql_athena(sql=cursor)
@@ -34,10 +45,11 @@ class PandasAthenaReader(PandasReader):
 def pandas_read(cursor, reader=PandasReader(), **kwargs):
 
     """
-    Reads data into a DataFrame using Pandas. If the cursor string is query-like, a database is queried and a
-    reader object must be supplied, otherwise the cursor string is treated like a file path.
-    :param cursor: String representing query or file location
-    :param reader: DB connection object that extends Pandas Reader
+    Reads data into a DataFrame using Pandas. If the cursor is an SPP Query, a database is queried and a
+    PandasReader instance must be supplied which implements read_db(), otherwise the cursor string is treated like a
+    file path.
+    :param cursor: Query instance or file path String
+    :param reader: DB connection object that extends PandasReader
     :param kwargs: Other keyword arguments to pass to pd.read_{format}()
     :returns Pandas DataFrame:
     """
@@ -59,9 +71,9 @@ def spark_read(spark, cursor, **kwargs):
 
     """
     Reads data into a DataFrame using Spark. If the cursor is an SPP Query, the Spark metastore is used,
-    otherwise the cursor is treated like a file path String.
+    otherwise the cursor is treated like a file path.
     :param spark: Spark session
-    :param cursor: Query object or file location String
+    :param cursor: Query instance or file path String
     :param kwargs: Other keyword arguments to pass to spark.read.load()
     :returns Spark DataFrame:
     """
