@@ -1,4 +1,4 @@
-from spp.aws.lambdafunctions.message_utils import is_valid_json, write_queue
+from spp.engine.messaging import is_valid_json, write_queue
 
 
 valid_schema = {
