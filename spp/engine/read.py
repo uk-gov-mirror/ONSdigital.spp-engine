@@ -9,7 +9,7 @@ logger.setLevel(logging.INFO)
 
 class PandasReader:
 
-    def read_db(self, query):
+    def read_db(self, query, **kwargs):
         """ To be implemented by child classes """
         raise NotImplementedError('Abstract method.')
 
@@ -28,15 +28,15 @@ class PandasReader:
 
 class PandasAthenaReader(PandasReader):
 
-    def read_db(self, query):
+    def read_db(self, query, **kwargs):
         """
-        Reads an Athena table into a Pandas DataFrame using an SQL query.
-        :param query: SQL String compatible with AWS Athena
+        Reads an Athena table into a Pandas DataFrame using an SPP Query instance.
+        :param query: Query instance
         :returns Pandas DataFrame:
         """
         import awswrangler
         session = awswrangler.Session()
-        return session.pandas.read_sql_athena(sql=cursor)
+        return session.pandas.read_sql_athena(sql=str(query)[:-1], **kwargs)
 
     def __repr__(self):
         return 'PandasAthenaReader'
@@ -55,9 +55,9 @@ def pandas_read(cursor, reader=PandasReader(), **kwargs):
     """
     # If cursor looks like query
     if isinstance(cursor, Query):
-        _db_log(str(cursor)[:-1], reader)
+        _db_log(str(cursor), reader)
         if reader:
-            return reader.read_db(str(cursor)[:-1])
+            return reader.read_db(cursor, **kwargs)
         else:
             raise Exception('Cursor is query-like, but no reader object given')
 
@@ -93,12 +93,12 @@ def _get_file_format(location):
     return location.split('.')[-1]
 
 
-def _db_log(cursor, connection):
+def _db_log(query, reader):
     logger.info(f"Reading from database")
-    logger.info(f"Query: {cursor}")
-    logger.info(f"Connection: {connection}")
+    logger.info(f"Query: {query}")
+    logger.info(f"Reader: {reader}")
 
 
-def _file_log(cursor):
+def _file_log(path):
     logger.info(f"Reading from file")
-    logger.info(f"Location: {cursor}")
+    logger.info(f"Location: {path}")
