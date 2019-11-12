@@ -21,9 +21,6 @@ class QueueWriter:
 
 class SQSQueueWriter(QueueWriter):
 
-    def __init__(self):
-        self.client = boto3.client('sqs')
-
     def send_message(self, queue, event, **kwargs):
         """
         Calls the boto3 client library to send a message to an SQS queue.
@@ -31,7 +28,8 @@ class SQSQueueWriter(QueueWriter):
         :param event: JSON message to write
         :returns response: Dictionary with SQS response or error message
         """
-        return self.client.send_message(QueueUrl=queue, MessageBody=json.dumps(event), **kwargs)
+        client = boto3.client('sqs')
+        return client.send_message(QueueUrl=queue, MessageBody=json.dumps(event), **kwargs)
 
 
 def write_queue(queue_resource, event, writer=QueueWriter(), **kwargs):
