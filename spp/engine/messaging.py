@@ -46,7 +46,7 @@ def write_queue(queue_resource, event, writer=QueueWriter(), **kwargs):
     _message_log(queue_resource, writer)
     try:
         response = writer.send_message(queue_resource, event, **kwargs)
-    except NotImplementedError as ex:
+    except NotImplementedError:
         logging.exception("send_message method in writer instance not implemented.")
         raise
     except Exception as ex:
