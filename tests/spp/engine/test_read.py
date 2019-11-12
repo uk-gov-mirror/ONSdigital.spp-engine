@@ -2,8 +2,7 @@ from spp.engine import read
 from spp.engine.query import Query
 import pandas as pd
 from pandas.testing import assert_frame_equal
-import importlib
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
 
 def test_spark_read_db(spark_test_session):
@@ -25,12 +24,26 @@ def test_spark_read_json(spark_test_session):
     assert read.spark_read(spark_test_session, './tests/resources/data/dummy.json').collect() == df.collect()
 
 
-# TODO: Implement this mock
-def test_pandas_read_db():
+@patch('spp.engine.read.PandasAthenaReader.read_db')
+def test_pandas_read_db(mock_instance_method):
 
-    read.pandas_read = MagicMock(return_value=pd.read_csv('./tests/resources/data/dummy.csv'))
+    mock_instance_method.return_value = pd.read_csv('./tests/resources/data/dummy.csv')
     df = pd.read_csv('./tests/resources/data/dummy.csv')
-    assert_frame_equal(read.pandas_read('./tests/resources/data/dummy.csv', 'connection'), df)
+    from spp.engine.read import PandasAthenaReader
+    assert_frame_equal(read.pandas_read(Query('FAKEDB', 'FAKETABLE', ['col1', 'col2'], 'col1 = 1'), PandasAthenaReader()), df)
+
+
+def test_pandas_read_db_not_implemented():
+
+    from spp.engine.read import PandasReader
+    from spp.engine.query import Query
+    raised = False
+    try:
+        read.pandas_read(Query('FAKEDB', 'FAKETABLE', ['col1', 'col2'], 'col1 = 1'), PandasReader())
+    except NotImplementedError:
+        raised = True
+    finally:
+        assert raised
 
 
 def test_pandas_read_csv():
