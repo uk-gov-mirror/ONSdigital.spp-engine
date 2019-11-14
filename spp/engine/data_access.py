@@ -10,7 +10,7 @@ class DataAccess:
     query = None
     name = None
 
-    def __int__(self, name, query):
+    def __init__(self, name, query):
         """
         Takes in the Query object that is used to access the data
         :param name: String
@@ -18,7 +18,7 @@ class DataAccess:
         :return:
         """
         self.query = query
-        self.name - name
+        self.name = name
 
     def read_data(self, platform, spark=None):
         """
