@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Iterable
 from pyspark.sql import SparkSession
-from engine.data_access import write_data, DataAccess
+from spp.engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
 import importlib
 
@@ -38,8 +38,11 @@ class PipelineMethod:
         self.module_name = module
         self.params = params
         self.data_in = []
-        for query_name, query in queries.items():
-            self.data_in.append(DataAccess(query_name, query))
+        for request in queries:
+            name = request['name']
+            query = {x: request[x] for x in request if x not in 'df_name'}
+            self.data_in.append(DataAccess(name, query))
+
 
     def run(self, platform, spark=None):
         """
