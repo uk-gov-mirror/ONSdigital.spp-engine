@@ -1,3 +1,6 @@
+from spp.engine.read import spark_read, pandas_read
+
+
 class DataAccess:
     """
     Wrapper that calls the differing Data Access methods depending on the platform that the pipeline is running on and
@@ -26,10 +29,9 @@ class DataAccess:
         :return:
         """
         if spark is None:
-            # TODO import the correct data access class and call get data to return in
-            return
+            return spark_read(spark=spark, cursor=self.query)
         else:
-            # TODO spark version of the above
+            # TODO small data version
             return
 
 

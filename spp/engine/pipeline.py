@@ -102,7 +102,7 @@ class Pipeline:
         """
         LOG.info("Initializing Pipeline")
         self.name = name
-        self.platform = platform
+        self.platform = Platform(platform)
         if is_spark:
             LOG.info("Starting Spark Session for APP {}".format(name))
             self.spark = SparkSession.builder.appName(name).getOrCreate()

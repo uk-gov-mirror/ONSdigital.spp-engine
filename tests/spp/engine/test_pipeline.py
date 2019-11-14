@@ -10,7 +10,6 @@
 # 9.  Add methods to the pipeline
 # 10. Run the pipeline
 
-import pytest
 from mock import patch, PropertyMock
 from spp.engine.pipeline import PipelineMethod, Platform, Pipeline
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, BooleanType
@@ -100,8 +99,7 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
 
     data = [("000001", 1), ("000002", 2)]
 
-
-    schema_1 =  StructType([
+    schema_1 = StructType([
         StructField("reporting_date", StringType(), nullable=True),
         StructField("entity_name", StringType(), nullable=True),
         StructField("value", IntegerType(), nullable=True)
