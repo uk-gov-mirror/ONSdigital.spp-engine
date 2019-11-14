@@ -5,11 +5,12 @@
 
 
 import json
-from spp.engine.pipeline import Platform
-from scripts.runner import Runner
-from pyspark.sql import SparkSession
-from unittest.mock import patch
 import pandas as pd
+from unittest.mock import patch
+from pyspark.sql import SparkSession
+
+from scripts.runner import Runner
+from spp.engine.pipeline import Platform
 
 
 with open("./tests/resources/config/test_bd_pipeline.json") as f:
