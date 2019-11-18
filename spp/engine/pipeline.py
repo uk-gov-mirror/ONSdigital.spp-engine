@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Iterable
 from pyspark.sql import SparkSession
-from engine.data_access import write_data, DataAccess
+from spp.engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
 import importlib
 

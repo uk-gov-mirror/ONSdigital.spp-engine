@@ -1,4 +1,7 @@
 from spp.engine.read import spark_read, pandas_read
+from awsglue.context import GlueContext
+from spp.engine.pipeline import Platform
+from spp.aws.gluejob.datasource_glue import glue_sparkshell_handler
 
 
 class DataAccess:
@@ -18,7 +21,7 @@ class DataAccess:
         :return:
         """
         self.query = query
-        self.name - name
+        self.name = name
 
     def read_data(self, platform, spark=None):
         """
@@ -29,7 +32,9 @@ class DataAccess:
         :return:
         """
         if spark is None:
-            return spark_read(spark=spark, cursor=self.query)
+            if platform == Platform.AWS.value:
+                spark_glue = glue_sparkshell_handler(spark)
+                return spark_read(spark=spark_glue, cursor=self.query)
         else:
             # TODO small data version
             return
