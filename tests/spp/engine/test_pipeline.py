@@ -10,7 +10,7 @@
 # 9.  Add methods to the pipeline
 # 10. Run the pipeline
 
-from mock import patch, PropertyMock
+from unittest.mock import patch, PropertyMock
 from spp.engine.pipeline import PipelineMethod, Platform, Pipeline
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, BooleanType
 import pandas as pd

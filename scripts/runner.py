@@ -1,25 +1,33 @@
-import json
+from spp.engine.pipeline import Pipeline
 from spp.utils.logging import Logger
-from spp.engine.pipeline import Pipeline, Platform, PipelineMethod
+
 
 LOG = Logger(__name__).get()
 
 
-pipeline = None
+class Runner:
 
+    def __init__(self, config):
+        self.config = config['pipeline']
+        self.run_id = self.config['run_id']
+        self.pipeline = self._build_from_config()
 
-def parse_config(config):
-    """
-    Will read through a JSON config to create a pipeline object
-    :param config:
-    :return:
-    """
-    conf = config.get("pipeline")
-    pipeline = Pipeline(conf.get("name"), conf.get('platform'), conf.get('spark'))
+    def run(self):
+        LOG.info("Running pipeline {}, run {}".format(self.pipeline.name, self.run_id))
+        self.pipeline.run(platform=self.config['platform'])
 
-    methods = conf.get("methods")
-    for k,v in methods:
-        pipeline.add_pipeline_methods()
+    def _build_from_config(self):
+        LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
+            self.config['name'], self.config['platform'], self.config['spark']
+        ))
+        pipeline = Pipeline(name=self.config['name'], platform=self.config['platform'], is_spark=self.config['spark'])
 
-    return pipeline
+        for method in self.config['methods']:
+            LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
+                method['name'], method['module'], method['data_access'], method['params']
+            ))
+            pipeline.add_pipeline_methods(
+                name=method['name'], module=method['module'], queries=method['data_access'], params=method['params'][0]
+            )
 
+        return pipeline
