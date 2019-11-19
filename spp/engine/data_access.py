@@ -1,7 +1,4 @@
 from spp.engine.read import spark_read, pandas_read
-from awsglue.context import GlueContext
-from spp.engine.pipeline import Platform
-from spp.aws.gluejob.datasource_glue import glue_sparkshell_handler
 
 
 class DataAccess:
@@ -31,10 +28,9 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
-        if spark is None:
-            if platform == Platform.AWS.value:
-                spark_glue = glue_sparkshell_handler(spark)
-                return spark_read(spark=spark_glue, cursor=self.query)
+        if spark is not None:
+            if platform == "AWS":
+                return spark_read(spark=spark, cursor=self.query)
         else:
             # TODO small data version
             return

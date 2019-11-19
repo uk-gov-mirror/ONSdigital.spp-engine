@@ -10,7 +10,7 @@ from unittest.mock import patch
 from pyspark.sql import SparkSession
 
 from scripts.runner import Runner
-from spp.engine.pipeline import Platform
+#from spp.engine.pipeline import Platform
 
 
 with open("./tests/resources/config/test_bd_pipeline.json") as f:
@@ -28,7 +28,7 @@ def test_parse_config_bd():
     assert runner.run_id == '000001'
     assert pipeline.name == 'test_pipeline'
     assert isinstance(pipeline.spark, SparkSession)
-    assert pipeline.platform.value == Platform.AWS.value
+    assert pipeline.platform.value == "AWS"
 
     assert pipeline.methods[0].module_name == 'tests.test_methods.bd.big_data'
     assert pipeline.methods[0].method_name == 'method_a'
