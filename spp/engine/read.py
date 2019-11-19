@@ -1,4 +1,4 @@
-from spp.engine.query import Query
+from spp.utils.query import Query
 import logging
 import importlib
 

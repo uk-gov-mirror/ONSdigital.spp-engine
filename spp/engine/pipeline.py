@@ -5,6 +5,8 @@ from spp.engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
 import importlib
 
+from spp.utils.query import Query
+
 LOG = Logger(__name__).get()
 
 
@@ -25,12 +27,12 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, queries, params=None):
+    def __init__(self, name, module, data_store, params=None):
         """
         Initialise the attributes of the class
         :param name: String
         :param module: String
-        :param queries: Dict[String, spp.utils.query.Query]
+        :param data_access: list of Dict[String, Dict]
         :param params: Dict[String, Any]
         """
         LOG.info("Initializing Method")
@@ -38,11 +40,24 @@ class PipelineMethod:
         self.module_name = module
         self.params = params
         self.data_in = []
-        for request in queries:
-            name = request['name']
-            query = {x: request[x] for x in request if x not in 'df_name'}
+        da_key =[]
+        da_value = []
+        #def __init__(self, database, table, select=None, where=None):
+        for da in data_store:
+            da_key.append(da['name'])
+            tmp_sql = Query(database = da['database'],table = da['table'],select = da['select'],where=da['where'])
+            tmp_path = da['path']
+            da_value.append({'sql':tmp_sql,'path':tmp_path})
+        data_store_tmp = dict(zip(da_key, da_value))
+        for d_name, d_info in data_store_tmp.items():
+            name = d_name
+            query = None
+            for key in d_info:
+                if query is None:
+                    query = d_info[key]
+                elif key == "sql":
+                    query = d_info[key]
             self.data_in.append(DataAccess(name, query))
-
 
     def run(self, platform, spark=None):
         """
@@ -52,7 +67,7 @@ class PipelineMethod:
         :return:
         """
         LOG.info("Retrieving data")
-        inputs = {data.name: data.read_data(platform, spark) for data in self.data_in}
+        inputs = {data.name: data.pipeline_read_data(platform, spark) for data in self.data_in}
         LOG.info("Data Retrieved")
         LOG.debug("Retrieved data : {}".format(inputs))
         LOG.info("Importing Module")
@@ -111,12 +126,12 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, queries, params):
+    def add_pipeline_methods(self, name, module, data_store, params):
         """
         Adds a new method to the pipeline
         :param name: String
         :param module: String
-        :param queries: Dict[String, spp.utils.query.Query]
+        :param data_access: list of Dict[String, Dict]
         :param params: Dict[String, Any]
         :return:
         """
@@ -124,8 +139,8 @@ class Pipeline:
         LOG.debug("Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}.".format(name,
                                                                                                             module,
                                                                                                             params,
-                                                                                                            queries))
-        self.methods.append(PipelineMethod(name, module, queries, params))
+                                                                                                            data_store))
+        self.methods.append(PipelineMethod(name, module, data_store, params))
 
     def run(self, platform):
         """

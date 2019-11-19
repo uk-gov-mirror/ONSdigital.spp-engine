@@ -48,7 +48,7 @@ def test_parse_config_bd():
     # TODO: Add DataAccess parsing
 
     with patch(
-        'spp.engine.data_access.DataAccess.read_data',
+        'spp.engine.data_access.DataAccess.pipeline_read_data',
         return_value=pipeline.spark.read.json('./tests/resources/data/dummy2.json')
     ):
         runner.run()
@@ -62,7 +62,7 @@ def test_parse_config_sd():
     assert runner.run_id == '000002'
     assert pipeline.name == 'test_sd_pipeline'
     assert not pipeline.spark
-    assert pipeline.platform.value == Platform.AWS.value
+    assert pipeline.platform.value == "AWS"
 
     assert pipeline.methods[0].module_name == 'tests.test_methods.sd.small_data'
     assert pipeline.methods[0].method_name == 'method_c'
@@ -82,7 +82,7 @@ def test_parse_config_sd():
     # TODO: Add DataAccess parsing
 
     with patch(
-            'spp.engine.data_access.DataAccess.read_data',
+            'spp.engine.data_access.DataAccess.pipeline_read_data',
             return_value=pd.read_json('./tests/resources/data/dummy2.json', lines=True)
     ):
         runner.run()

@@ -22,7 +22,7 @@ def test_aws_small_method(mock_class, mock_method):
 
     mock_method.return_value("Data has been written out")
     mock_class.return_value.name = "df"
-    mock_class().read_data.return_value = pd.DataFrame({"old_col": pd.Series([1])})
+    mock_class().pipeline_read_data.return_value = pd.DataFrame({"old_col": pd.Series([1])})
 
     test_method = PipelineMethod("method_c", "tests.test_methods.sd.small_data",
                                  {"df": "DataFrame"},
@@ -47,7 +47,7 @@ def test_aws_big_method(mock_class, mock_method, create_session):
 
     sdf = create_session.createDataFrame(data, schema)
 
-    mock_class().read_data.return_value = sdf
+    mock_class().pipeline_read_data.return_value = sdf
 
     test_method = PipelineMethod("method_a", "tests.test_methods.bd.big_data",
                                  {"df": "DataFrame"},
@@ -71,7 +71,7 @@ def test_aws_small_pipeline(mock_class, mock_method):
 
     mock_method.return_value("Data has been written out")
     type(mock_class()).name = PropertyMock(side_effect=df_names)
-    mock_class().read_data.side_effect = dfs
+    mock_class().pipeline_read_data.side_effect = dfs
 
     test_pipeline = Pipeline("Test", Platform.AWS, False)
 
@@ -119,7 +119,7 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
 
     mock_method.return_value("Data has been written out")
     type(mock_class()).name = PropertyMock(side_effect=df_names)
-    mock_class().read_data.side_effect = dfs
+    mock_class().pipeline_read_data.side_effect = dfs
 
     test_pipeline = Pipeline("Test", Platform.AWS, True)
 
