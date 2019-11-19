@@ -19,7 +19,7 @@ config = {
     'version': about["__version__"],
     'packages': find_packages(exclude=['tests']),
     'scripts': [],
-    'name': 'spp-engine',
+    'name': 'spp_engine',
     'install_requires': [],
     'classifiers': []
 }
