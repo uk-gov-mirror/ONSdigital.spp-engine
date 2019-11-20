@@ -25,8 +25,19 @@ def test_aws_small_method(mock_class, mock_method):
     mock_class().read_data.return_value = pd.DataFrame({"old_col": pd.Series([1])})
 
     test_method = PipelineMethod("method_c", "tests.test_methods.sd.small_data",
-                                 {"df": "DataFrame"},
-                                 {"param_1": 1, "param_2": "New_col", "param_3": ["value"]})
+                                 [{"name": "df", "database": "test_db", "table": "test_table", "select":
+                                     [
+                                         "column_1",
+                                         "column_2"
+                                     ],
+                                  "where":
+                                      [{
+                                          "column": "column_1",
+                                          "condition":  "=",
+                                          "value":  100
+                                      }]
+                                 }],
+                                 {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_method.run(Platform.AWS, None)
 
@@ -50,7 +61,18 @@ def test_aws_big_method(mock_class, mock_method, create_session):
     mock_class().read_data.return_value = sdf
 
     test_method = PipelineMethod("method_a", "tests.test_methods.bd.big_data",
-                                 {"df": "DataFrame"},
+                                 [{"name": "df", "database": "test_db", "table": "test_table", "select":
+                                     [
+                                         "column_1",
+                                         "column_2"
+                                     ],
+                                   "where":
+                                       [{
+                                           "column": "column_1",
+                                           "condition":  "=",
+                                           "value":  100
+                                       }]
+                                 }],
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_method.run(Platform.AWS, create_session)
@@ -76,11 +98,49 @@ def test_aws_small_pipeline(mock_class, mock_method):
     test_pipeline = Pipeline("Test", Platform.AWS, False)
 
     test_pipeline.add_pipeline_methods("method_c", "tests.test_methods.sd.small_data",
-                                       {"df": "DataFrame"},
-                                       {"param_1": 1, "param_2": "New_col", "param_3": ["value", "value_2"]})
+                                       [{"name": "df", "database": "test_db", "table": "test_table", "select":
+                                           [
+                                               "column_1",
+                                               "column_2"
+                                           ],
+                                         "where":
+                                             [{
+                                                 "column": "column_1",
+                                                 "condition":  "=",
+                                                 "value":  100
+                                             }]
+                                         }],
+                                       {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_pipeline.add_pipeline_methods("method_d", "tests.test_methods.sd.small_data",
-                                       {"df_1": "DataFrame_1", "df_2": "DataFrame_2"},
+                                       [{
+                                           "name": "df_1",
+                                           "database": "test_db_1",
+                                           "table": "test_table_1",
+                                           "select": [
+                                               "column_1",
+                                               "column_2"
+                                           ],
+                                           "where": [
+                                               {"column": "column_1",
+                                                "condition":  "=",
+                                                "value":  100}
+                                           ]
+                                       },
+                                       {
+                                           "name": "df_2",
+                                           "database": "test_db_2",
+                                           "table": "test_table_2",
+                                           "select": [
+                                               "column_1",
+                                               "column_2"
+                                           ],
+                                           "where": [
+                                               {"column": "column_2",
+                                                "condition":  "<",
+                                                "value":  500}
+                                           ]
+                                       }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(Platform.AWS)
@@ -124,11 +184,49 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
     test_pipeline = Pipeline("Test", Platform.AWS, True)
 
     test_pipeline.add_pipeline_methods("method_a", "tests.test_methods.bd.big_data",
-                                       {"df": "DataFrame"},
+                                       [{"name": "df", "database": "test_db", "table": "test_table", "select":
+                                           [
+                                               "column_1",
+                                               "column_2"
+                                           ],
+                                         "where":
+                                             [{
+                                                 "column": "column_1",
+                                                 "condition":  "=",
+                                                 "value":  100
+                                             }]
+                                         }],
                                        {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_pipeline.add_pipeline_methods("method_b", "tests.test_methods.bd.big_data",
-                                       {"df_1": "DataFrame_1", "df_2": "DataFrame_2"},
+                                       [{
+                                           "name": "df_1",
+                                           "database": "test_db_1",
+                                           "table": "test_table_1",
+                                           "select": [
+                                               "column_1",
+                                               "column_2"
+                                           ],
+                                           "where": [
+                                               {"column": "column_1",
+                                                "condition":  "=",
+                                                "value":  100}
+                                           ]
+                                       },
+                                           {
+                                               "name": "df_2",
+                                               "database": "test_db_2",
+                                               "table": "test_table_2",
+                                               "select": [
+                                                   "column_1",
+                                                   "column_2"
+                                               ],
+                                               "where": [
+                                                   {"column": "column_2",
+                                                    "condition":  "<",
+                                                    "value":  500}
+                                               ]
+                                           }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(Platform.AWS)
