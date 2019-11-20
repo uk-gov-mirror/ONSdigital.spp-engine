@@ -39,18 +39,18 @@ class DataAccess:
             else:
                 return pandas_read(cursor = self.query)
 
-def write_data(output, platform, spark=None):
+def write_data(output,data_target, platform, spark=None):
         """
         This method may be removed as further requirements determine whether this should be a generic function
         :param output: Dataframe
+        :param data_target: target location
         :param platform: Platform
         :param spark: SparkSession
         :return:
         """
-        if spark is None:
-            # TODO write outputs spark_write(df, location, **kwargs):
-            spark_write(df=output)
+        if spark is not None:
+            spark_write(df=output,location = data_target)
             return
         else:
-            # TODO Spark Version
+            pandas_write(df = output, location = data_target)
             return

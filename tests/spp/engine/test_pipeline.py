@@ -14,7 +14,7 @@ from unittest.mock import patch, PropertyMock
 from spp.engine.pipeline import PipelineMethod, Platform, Pipeline
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, BooleanType
 import pandas as pd
-
+import spp.engine.pipeline as p_module
 
 @patch('spp.engine.pipeline.write_data')
 @patch('spp.engine.pipeline.DataAccess')
@@ -22,13 +22,17 @@ def test_aws_small_method(mock_class, mock_method):
 
     mock_method.return_value("Data has been written out")
     mock_class.return_value.name = "df"
-    mock_class().pipeline_read_data.return_value = pd.DataFrame({"old_col": pd.Series([1])})
+    mock_class().pipeline_read_data.return_value = pd.DataFrame({"old_col": pd.Series([2])})
 
     test_method = PipelineMethod("method_c", "tests.test_methods.sd.small_data",
-                                 {"df": "DataFrame"},
-                                 {"param_1": 1, "param_2": "New_col", "param_3": ["value"]})
+                                 [{"name": "df","database": "test_db","table": "test_table",
+                                     "path": "dummy.json",
+                                     "select": ["column_1","column_2"],"where": [{"column": "column_1",
+                                                                                  "condition":  "=","value":  100}]}],
+                                 {"data_target_prefix":"s3://dtrades-assets/workflows"},
+                                 {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_method.run(Platform.AWS, None)
+    test_method.run(p_module.Platform.AWS, None)
 
 
 @patch('spp.engine.pipeline.write_data')
@@ -48,12 +52,15 @@ def test_aws_big_method(mock_class, mock_method, create_session):
     sdf = create_session.createDataFrame(data, schema)
 
     mock_class().pipeline_read_data.return_value = sdf
-
     test_method = PipelineMethod("method_a", "tests.test_methods.bd.big_data",
-                                 {"df": "DataFrame"},
+                                 [{"name": "df","database": "test_db","table": "test_table",
+                                   "path": "dummy.json",
+                                   "select": ["column_1","column_2"],"where": [{"column": "column_1",
+                                                                                "condition":  "=","value":  100}]}],
+                                 {"data_target_prefix":"s3://dtrades-assets/workflows"},
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
-    test_method.run(Platform.AWS, create_session)
+    test_method.run(p_module.Platform.AWS, create_session)
 
 
 @patch('spp.engine.pipeline.write_data')
@@ -73,17 +80,26 @@ def test_aws_small_pipeline(mock_class, mock_method):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", Platform.AWS, False)
+    test_pipeline = Pipeline("Test","000001", p_module.Platform.AWS, False)
 
     test_pipeline.add_pipeline_methods("method_c", "tests.test_methods.sd.small_data",
-                                       {"df": "DataFrame"},
-                                       {"param_1": 1, "param_2": "New_col", "param_3": ["value", "value_2"]})
+                                       [{"name": "df","database": "test_db","table": "test_table",
+                                         "path": "dummy.json",
+                                         "select": ["column_1","column_2"],"where": [{"column": "column_1",
+                                                                                      "condition":  "=","value":  100}]}],
+                                       "s3://dtrades-assets/workflows",
+                                       {"param_1": 0, "param_2": 1, "param_3": 3})
 
     test_pipeline.add_pipeline_methods("method_d", "tests.test_methods.sd.small_data",
-                                       {"df_1": "DataFrame_1", "df_2": "DataFrame_2"},
-                                       {"param_1": "reporting_date", "param_2": "entity_name"})
+                                       [{"name": "df_1","path": "dummy.json","database": "test_db_1","table": "test_table_1",
+                                           "select": ["column_1","column_2"],
+                                           "where": [{"column": "column_1","condition":  "=","value":  100}]},
+                                           {"name": "df_2","path": "dummy2.json","database": "test_db_2","table": "test_table_2",
+                                               "select": ["column_1","column_2"],
+                                               "where": [{"column": "column_2","condition":  "<","value":  500}]}],
+                                       "s3://dtrades-assets/workflows",{"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run(p_module.Platform.AWS)
 
 
 @patch('spp.engine.pipeline.write_data')
@@ -121,16 +137,26 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", Platform.AWS, True)
+    test_pipeline = Pipeline("Test","000001", p_module.Platform.AWS, True)
 
     test_pipeline.add_pipeline_methods("method_a", "tests.test_methods.bd.big_data",
-                                       {"df": "DataFrame"},
+                                       [{"name": "df","database": "test_db","table": "test_table",
+                                         "path": "dummy.json",
+                                         "select": ["column_1","column_2"],"where": [{"column": "column_1",
+                                                                                      "condition":  "=","value":  100}]}],
+                                       "s3://dtrades-assets/workflows",
                                        {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_pipeline.add_pipeline_methods("method_b", "tests.test_methods.bd.big_data",
-                                       {"df_1": "DataFrame_1", "df_2": "DataFrame_2"},
+                                       [{"name": "df_1","path": "dummy.json","database": "test_db_1","table": "test_table_1",
+                                         "select": ["column_1","column_2"],
+                                         "where": [{"column": "column_1","condition":  "=","value":  100}]},
+                                        {"name": "df_2","path": "dummy2.json","database": "test_db_2","table": "test_table_2",
+                                         "select": ["column_1","column_2"],
+                                         "where": [{"column": "column_2","condition":  "<","value":  500}]}],
+                                       "s3://dtrades-assets/workflows",
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run(p_module.Platform.AWS)
 
 

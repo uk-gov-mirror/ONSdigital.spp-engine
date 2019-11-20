@@ -7,6 +7,7 @@
     "methods": [{
       "name": "method_a",
       "module": "tests.test_methods.bd.big_data",
+      "data_target_prefix": "s3://dtrades-assets/workflows",
       "data_access": [{
         "name": "df",
         "database": "test_db",
@@ -31,6 +32,7 @@
       {
         "name": "method_b",
         "module": "tests.test_methods.bd.big_data",
+        "data_target_prefix": "s3://dtrades-assets/workflows",
         "data_access": [{
           "name": "df_1",
           "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",

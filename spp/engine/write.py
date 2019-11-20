@@ -29,7 +29,10 @@ def pandas_write(df, location, **kwargs):
 
 
 def _get_file_format(location):
-    return location.split('.')[-1]
+    #ToDo
+    format="parquet"
+    #return location.split('.')[-1]
+    return format
 
 
 def _write_log(location):

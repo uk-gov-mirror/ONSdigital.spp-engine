@@ -1,12 +1,10 @@
 from spp.engine.pipeline import Pipeline
 from spp.utils.logging import Logger
 
-
 LOG = Logger(__name__).get()
 
 
 class Runner:
-
     def __init__(self, config):
         self.config = config['pipeline']
         self.run_id = self.config['run_id']
@@ -20,29 +18,15 @@ class Runner:
         LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
             self.config['name'], self.config['platform'], self.config['spark']
         ))
-        pipeline = Pipeline(name=self.config['name'], platform=self.config['platform'], is_spark=self.config['spark'])
+        pipeline = Pipeline(name=self.config['name'],run_id=self.config['run_id'], platform=self.config['platform'], is_spark=self.config['spark'])
 
         for method in self.config['methods']:
             LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
                 method['name'], method['module'], method['data_access'], method['params']
             ))
-            # data_access =  method['data_access']
-            # print('lala ::: ')
-            # print(str(data_access))
-            # da_key =[]
-            # da_value = []
-            # #def __init__(self, database, table, select=None, where=None):
-            # for da in data_access:
-            #     da_key.append(da['name'])
-            #     tmp_sql = Query(database = da['database'],table = da['table'],select = da['select'],where=da['where'])
-            #     tmp_path = da['path']
-            #     da_value.append({'sql':tmp_sql,'path':tmp_path})
-            #     print(str(da_value))
-            # data_access_final = dict(zip(da_key, da_value))
-            # print("data_access_final :: data_access_final ....")
-            # print(str(data_access_final))
             pipeline.add_pipeline_methods(
-                name=method['name'], module=method['module'], data_store=method['data_access'], params=method['params'][0]
+                name=method['name'], module=method['module'], data_source=method['data_access'],
+                data_target_prefix=method['data_target_prefix'], params=method['params'][0]
             )
 
         return pipeline
