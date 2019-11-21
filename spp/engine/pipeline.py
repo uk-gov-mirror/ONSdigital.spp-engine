@@ -43,7 +43,6 @@ class PipelineMethod:
         self.data_target = data_target
         da_key =[]
         da_value = []
-        #def __init__(self, database, table, select=None, where=None):
         for da in data_source:
             da_key.append(da['name'])
             tmp_sql = None
