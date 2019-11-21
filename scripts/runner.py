@@ -1,32 +1,28 @@
-from spp.engine.pipeline import Pipeline
+from __future__ import unicode_literals
+
+import json
+import sys
+
+from spp.utils.execution import construct_pipeline, run
 from spp.utils.logging import Logger
+
+
+import boto3
+from awsglue.utils import getResolvedOptions
+
 
 LOG = Logger(__name__).get()
 
+s3_client = boto3.client('s3')
+s3_resource = boto3.resource('s3')
 
-class Runner:
-    def __init__(self, config):
-        self.config = config['pipeline']
-        self.run_id = self.config['run_id']
-        self.pipeline = self._build_from_config()
+args = getResolvedOptions(sys.argv, ['config'])
+config_parameters_string = (args['config']).replace("'", '"').replace('"True"', "true").replace('"False"', "false")
+config = json.loads(config_parameters_string)['pipeline']
 
-    def run(self):
-        LOG.info("Running pipeline {}, run {}".format(self.pipeline.name, self.run_id))
-        self.pipeline.run(platform=self.config['platform'])
+if config['spark']:
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.appName('DTrade').getOrCreate()
 
-    def _build_from_config(self):
-        LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
-            self.config['name'], self.config['platform'], self.config['spark']
-        ))
-        pipeline = Pipeline(name=self.config['name'],run_id=self.config['run_id'], platform=self.config['platform'], is_spark=self.config['spark'])
-
-        for method in self.config['methods']:
-            LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
-                method['name'], method['module'], method['data_access'], method['params']
-            ))
-            pipeline.add_pipeline_methods(
-                name=method['name'], module=method['module'], data_source=method['data_access'],
-                data_target_prefix=method['data_target_prefix'], params=method['params'][0]
-            )
-
-        return pipeline
+pipeline = construct_pipeline(config)
+run(pipeline, config)

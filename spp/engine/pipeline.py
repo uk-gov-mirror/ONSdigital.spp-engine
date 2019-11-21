@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Iterable
-from pyspark.sql import SparkSession
 from spp.engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
 import importlib
@@ -128,6 +127,7 @@ class Pipeline:
         self.run_id = run_id
         if is_spark:
             LOG.info("Starting Spark Session for APP {}".format(name))
+            from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
