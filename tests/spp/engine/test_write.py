@@ -43,15 +43,15 @@ def test_spark_write_file_with_partitions(create_session):
         shutil.rmtree(suite_location)
 
 
-# def test_pandas_write_parquet():
-#
-#     df = pd.read_csv('./tests/resources/data/dummy.csv')
-#     test_location = f"{suite_location}/test_pandas_write_file.parquet"
-#
-#     try:
-#         if not os.path.exists(suite_location):
-#             os.mkdir(suite_location)
-#         pandas_write(df, test_location)
-#         assert os.path.exists(test_location)
-#     finally:
-#         shutil.rmtree(suite_location)
+def test_pandas_write_parquet():
+
+    df = pd.read_csv('./tests/resources/data/dummy.csv')
+    test_location = f"{suite_location}/test_pandas_write_file.parquet"
+
+    try:
+        if not os.path.exists(suite_location):
+            os.mkdir(suite_location)
+        pandas_write(df, test_location)
+        assert os.path.exists(test_location)
+    finally:
+        shutil.rmtree(suite_location)
