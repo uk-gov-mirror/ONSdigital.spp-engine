@@ -35,7 +35,7 @@ class DataAccess:
              return spark_read(spark=spark, cursor=self.query)
         else:
             if (platform == p_module.Platform.AWS) & (isinstance(self.query, Query)):
-                return pandas_read(cursor = self.query,reader=PandasAthenaReader)
+                return pandas_read(cursor = self.query,reader=PandasAthenaReader())
             else:
                 return pandas_read(cursor = self.query)
 
