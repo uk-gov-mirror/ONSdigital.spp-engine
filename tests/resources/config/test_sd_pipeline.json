@@ -1,0 +1,72 @@
+{
+  "pipeline": {
+    "name": "test_sd_pipeline",
+    "spark": false,
+    "platform": "AWS",
+    "run_id": "000002",
+    "methods": [{
+      "name": "method_c",
+      "module": "tests.test_methods.sd.small_data",
+      "data_target_prefix": "s3://dtrades-assets/workflows",
+      "data_access": [{
+        "name": "df",
+        "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
+        "database": "test_db",
+        "table": "test_table",
+        "select": [
+          "column_1",
+          "column_2"
+        ],
+        "where": [
+          {"column": "column_1",
+          "condition":  "=",
+          "value":  100}
+        ]
+      }],
+      "params": [{
+        "param_1": "col_1",
+        "param_2": "col_2",
+        "param_3": "col_3"
+      }]
+    },
+      {
+        "name": "method_d",
+        "module": "tests.test_methods.sd.small_data",
+        "data_target_prefix": "s3://dtrades-assets/workflows",
+        "data_access": [{
+          "name": "df_1",
+          "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
+          "database": "test_db_1",
+          "table": "test_table_1",
+          "select": [
+            "column_1",
+            "column_2"
+          ],
+          "where": [
+            {"column": "column_1",
+              "condition":  "=",
+              "value":  100}
+          ]
+        },
+          {
+            "name": "df_2",
+            "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy2.json",
+            "database": "test_db_2",
+            "table": "test_table_2",
+            "select": [
+              "column_1",
+              "column_2"
+            ],
+            "where": [
+              {"column": "column_2",
+                "condition":  "<",
+                "value":  500}
+            ]
+          }],
+        "params": [{
+          "param_1": "reporting_date",
+          "param_2": "entity_name"
+        }]
+      }]
+  }
+}
