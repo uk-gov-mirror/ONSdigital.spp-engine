@@ -1,27 +1,31 @@
-from unittest.mock import patch, PropertyMock
-from spp.engine.pipeline import PipelineMethod, Platform, Pipeline
-from pyspark.sql.types import StructField, StructType, StringType, IntegerType, BooleanType
-import pandas as pd
+from unittest.mock import patch
 import spp.engine.pipeline as p_module
-from spp.engine.data_access import write_data, DataAccess
-from spp.engine.read import spark_read,pandas_read
+from spp.engine.data_access import DataAccess
 from spp.utils.query import Query
+import pandas as pd
 
-
-
-@patch('spp.engine.read.spark_read')
-def test_aws_small_pipeline_read_data(mock_spark_read,create_session):
+@patch('spp.engine.data_access.pandas_read')
+@patch('spp.engine.data_access.spark_read')
+def test_aws_big_pipeline_read_data(mock_spark_read , mock_pandas_read, create_session):
     data_access = DataAccess(name = "df",query = Query('test_db', 'test_table', ['col1', 'col2'], 'col1 = 100'))
-    schema = StructType([
-        StructField("id", StringType(), nullable=False),
-        StructField("short_id", IntegerType(), nullable=False)
-    ])
-
-    data = [("000001", 1), ("000002", 2)]
-
-    sdf = create_session.createDataFrame(data, schema)
-
-    #mock_class().re.return_value = sdf
     data_access.pipeline_read_data(p_module.Platform.AWS,create_session)
-    assertTrue(mock_spark_read.called)
+    assert mock_spark_read.called
+    assert not mock_pandas_read.called
 
+@patch('spp.engine.data_access.pandas_read')
+@patch('spp.engine.data_access.spark_read')
+def test_aws_small_pipeline_read_data_1(mock_spark_read , mock_pandas_read):
+    data_access = DataAccess(name = "df",query = "s3://BUCKET_NAME/PATH-TO-INPUT-DATA/")
+    data_access.pipeline_read_data(p_module.Platform.AWS)
+    assert not mock_spark_read.called
+    assert mock_pandas_read.called
+
+
+@patch('spp.engine.read.PandasAthenaReader.read_db')
+@patch('spp.engine.data_access.spark_read')
+def test_aws_small_pipeline_read_data_2(mock_spark_read , mock_pandas_athena):
+    data_access = DataAccess(name = "df",query = Query('test_db', 'test_table', ['col1', 'col2'], 'col1 = 100'))
+    data_access.pipeline_read_data(p_module.Platform.AWS)
+    mock_pandas_athena.return_value =  pd.DataFrame({"old_col": pd.Series([2])})
+    assert not mock_spark_read.called
+    assert mock_pandas_athena.called
