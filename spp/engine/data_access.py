@@ -31,6 +31,7 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
+
         if spark is not None:
              return spark_read(spark=spark, cursor=self.query)
         else:
