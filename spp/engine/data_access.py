@@ -2,6 +2,9 @@ from spp.engine.read import spark_read, pandas_read,PandasAthenaReader
 from spp.engine.write import spark_write,pandas_write
 from spp.utils.query import Query
 import spp.engine.pipeline
+from spp.utils.logging import Logger
+
+LOG = Logger(__name__).get()
 
 class DataAccess:
     """
@@ -30,11 +33,11 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
-
+        LOG.info("Initializing Method")
         if spark is not None:
              return spark_read(spark=spark, cursor=self.query)
         else:
-            if (platform ==  spp.engine.pipeline.Platform.AWS) & (isinstance(self.query, Query)):
+            if (platform ==  spp.engine.pipeline.Platform.AWS.value) & (isinstance(self.query, Query)):
                 return pandas_read(cursor = self.query,reader=PandasAthenaReader())
             else:
                 return pandas_read(cursor = self.query)
