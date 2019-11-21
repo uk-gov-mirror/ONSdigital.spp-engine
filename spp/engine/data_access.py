@@ -1,8 +1,7 @@
 from spp.engine.read import spark_read, pandas_read,PandasAthenaReader
 from spp.engine.write import spark_write,pandas_write
 from spp.utils.query import Query
-import spp.engine.pipeline as p_module
-
+import spp.engine.pipeline
 
 class DataAccess:
     """
@@ -35,7 +34,7 @@ class DataAccess:
         if spark is not None:
              return spark_read(spark=spark, cursor=self.query)
         else:
-            if (platform == p_module.Platform.AWS) & (isinstance(self.query, Query)):
+            if (platform ==  spp.engine.pipeline.Platform.AWS) & (isinstance(self.query, Query)):
                 return pandas_read(cursor = self.query,reader=PandasAthenaReader())
             else:
                 return pandas_read(cursor = self.query)
