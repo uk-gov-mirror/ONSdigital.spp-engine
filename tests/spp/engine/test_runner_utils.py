@@ -9,7 +9,7 @@ import pandas as pd
 from unittest.mock import patch
 from pyspark.sql import SparkSession
 
-from spp.engine.runner import Runner
+from scripts.utils import construct_pipeline, run
 from spp.engine.pipeline import Platform
 
 
@@ -22,10 +22,8 @@ with open("./tests/resources/config/test_sd_pipeline.json") as f:
 
 def test_parse_config_bd():
 
-    runner = Runner(test_bd_json)
-    pipeline = runner.pipeline
+    pipeline = construct_pipeline(test_bd_json['pipeline'])
 
-    assert runner.run_id == '000001'
     assert pipeline.name == 'test_pipeline'
     assert isinstance(pipeline.spark, SparkSession)
     assert pipeline.platform.value == Platform.AWS.value
@@ -51,15 +49,13 @@ def test_parse_config_bd():
         'spp.engine.data_access.DataAccess.read_data',
         return_value=pipeline.spark.read.json('./tests/resources/data/dummy2.json')
     ):
-        runner.run()
+        run(pipeline, test_bd_json['pipeline'])
 
 
 def test_parse_config_sd():
 
-    runner = Runner(test_sd_json)
-    pipeline = runner.pipeline
+    pipeline = construct_pipeline(test_sd_json['pipeline'])
 
-    assert runner.run_id == '000002'
     assert pipeline.name == 'test_sd_pipeline'
     assert not pipeline.spark
     assert pipeline.platform.value == Platform.AWS.value
@@ -85,4 +81,4 @@ def test_parse_config_sd():
             'spp.engine.data_access.DataAccess.read_data',
             return_value=pd.read_json('./tests/resources/data/dummy2.json', lines=True)
     ):
-        runner.run()
+        run(pipeline, test_bd_json['pipeline'])
