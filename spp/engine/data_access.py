@@ -31,10 +31,7 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
-        print('Athena query')
-        print(self.query)
-        print('type ::: ')
-        print(type(self.query))
+
         if spark is not None:
              return spark_read(spark=spark, cursor=self.query)
         else:
