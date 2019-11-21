@@ -5,11 +5,9 @@
 
 
 import json
-import pandas as pd
-from unittest.mock import patch
 from pyspark.sql import SparkSession
 
-from spp.utils.execution import construct_pipeline, run
+from spp.utils.execution import construct_pipeline
 from spp.engine.pipeline import Platform
 
 
@@ -26,7 +24,7 @@ def test_parse_config_bd():
 
     assert pipeline.name == 'test_pipeline'
     assert isinstance(pipeline.spark, SparkSession)
-    assert pipeline.platform.value == Platform.AWS.value
+    assert pipeline.platform == Platform.AWS.value
 
     assert pipeline.methods[0].module_name == 'tests.test_methods.bd.big_data'
     assert pipeline.methods[0].method_name == 'method_a'
@@ -45,12 +43,6 @@ def test_parse_config_bd():
 
     # TODO: Add DataAccess parsing
 
-    with patch(
-        'spp.engine.data_access.DataAccess.read_data',
-        return_value=pipeline.spark.read.json('./tests/resources/data/dummy2.json')
-    ):
-        run(pipeline, test_bd_json['pipeline'])
-
 
 def test_parse_config_sd():
 
@@ -58,7 +50,7 @@ def test_parse_config_sd():
 
     assert pipeline.name == 'test_sd_pipeline'
     assert not pipeline.spark
-    assert pipeline.platform.value == Platform.AWS.value
+    assert pipeline.platform == Platform.AWS.value
 
     assert pipeline.methods[0].module_name == 'tests.test_methods.sd.small_data'
     assert pipeline.methods[0].method_name == 'method_c'
@@ -76,9 +68,3 @@ def test_parse_config_sd():
     }
 
     # TODO: Add DataAccess parsing
-
-    with patch(
-            'spp.engine.data_access.DataAccess.read_data',
-            return_value=pd.read_json('./tests/resources/data/dummy2.json', lines=True)
-    ):
-        run(pipeline, test_bd_json['pipeline'])
