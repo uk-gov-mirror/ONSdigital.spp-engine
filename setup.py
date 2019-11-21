@@ -1,8 +1,10 @@
+from setuptools import find_packages
 
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+
 
 about = {}
 with open('./__about__.py') as fp:
@@ -15,9 +17,11 @@ config = {
     'url': about["__gitrepo__"],
     'download_url': about["__pkgrepo__"],
     'version': about["__version__"],
-    'packages': ['aws', 'spp.engine'],
-    'scripts': [''],
+    'packages': find_packages(exclude=['tests']),
+    'scripts': [],
     'name': 'spp_engine',
-    'install_requires': [''],
+    'install_requires': [],
     'classifiers': []
 }
+
+setup(**config)
