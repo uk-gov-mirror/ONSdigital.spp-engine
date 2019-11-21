@@ -7,9 +7,9 @@ import shutil
 suite_location = './tests/tmp'
 
 
-def test_spark_write_csv(spark_test_session):
+def test_spark_write_csv(create_session):
 
-    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
+    df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file.csv"
 
     try:
@@ -19,9 +19,9 @@ def test_spark_write_csv(spark_test_session):
         shutil.rmtree(suite_location)
 
 
-def test_spark_write_json(spark_test_session):
+def test_spark_write_json(create_session):
 
-    df = spark_test_session.read.json('./tests/resources/data/dummy.json')
+    df = create_session.read.json('./tests/resources/data/dummy.json')
     test_location = f"{suite_location}/test_spark_write_file.json"
 
     try:
@@ -31,9 +31,9 @@ def test_spark_write_json(spark_test_session):
         shutil.rmtree(suite_location)
 
 
-def test_spark_write_file_with_partitions(spark_test_session):
+def test_spark_write_file_with_partitions(create_session):
 
-    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
+    df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file_with_partitions.csv"
 
     try:
