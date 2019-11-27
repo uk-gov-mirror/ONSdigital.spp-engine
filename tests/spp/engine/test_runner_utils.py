@@ -9,7 +9,7 @@ import pandas as pd
 from unittest.mock import patch
 from pyspark.sql import SparkSession
 
-from spp.utils.execution import construct_pipeline, run
+from spp.engine.pipeline import construct_pipeline, run
 from spp.engine.pipeline import Platform
 
 
