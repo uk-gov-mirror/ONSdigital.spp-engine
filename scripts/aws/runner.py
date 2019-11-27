@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 import sys
 
-from spp.engine.pipeline import construct_pipeline, run
+from spp.engine.pipeline import construct_pipeline
 from spp.utils.logging import Logger
 
 
@@ -21,4 +21,5 @@ config_parameters_string = (args['config']).replace("'", '"').replace('"True"', 
 config = json.loads(config_parameters_string)['pipeline']
 
 pipeline = construct_pipeline(config)
-run(pipeline, config)
+LOG.info("Running pipeline {}, run {}".format(pipeline.name, config['run_id']))
+pipeline.run()

@@ -126,7 +126,7 @@ class Pipeline:
                                                                                                             queries))
         self.methods.append(PipelineMethod(name, module, queries, params))
 
-    def run(self, platform):
+    def run(self):
         """
         Runs the methods of the pipeline
         :param platform: Platform
@@ -135,7 +135,7 @@ class Pipeline:
         LOG.info("Running Pipeline: {}".format(self.name))
         for method in self.methods:
             LOG.info("Running Method: {}".format(method.method_name))
-            method.run(platform, self.spark)
+            method.run(self.platform, self.spark)
             LOG.info("Method Finished: {}".format(method.method_name))
 
 
@@ -155,8 +155,3 @@ def construct_pipeline(config):
         )
 
     return pipeline
-
-
-def run(pipeline, config):
-    LOG.info("Running pipeline {}, run {}".format(pipeline.name, config['run_id']))
-    pipeline.run(platform=config['platform'])
