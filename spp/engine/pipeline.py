@@ -42,7 +42,6 @@ class PipelineMethod:
             query = {x: request[x] for x in request if x not in 'df_name'}
             self.data_in.append(DataAccess(name, query))
 
-
     def run(self, platform, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
@@ -138,3 +137,26 @@ class Pipeline:
             LOG.info("Running Method: {}".format(method.method_name))
             method.run(platform, self.spark)
             LOG.info("Method Finished: {}".format(method.method_name))
+
+
+def construct_pipeline(config):
+
+    LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
+        config['name'], config['platform'], config['spark']
+    ))
+    pipeline = Pipeline(name=config['name'], platform=config['platform'], is_spark=config['spark'])
+
+    for method in config['methods']:
+        LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
+            method['name'], method['module'], method['data_access'], method['params']
+        ))
+        pipeline.add_pipeline_methods(
+            name=method['name'], module=method['module'], queries=method['data_access'], params=method['params'][0]
+        )
+
+    return pipeline
+
+
+def run(pipeline, config):
+    LOG.info("Running pipeline {}, run {}".format(pipeline.name, config['run_id']))
+    pipeline.run(platform=config['platform'])
