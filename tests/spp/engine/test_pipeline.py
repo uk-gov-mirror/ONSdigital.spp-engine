@@ -132,7 +132,7 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                        }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run()
 
 
 @patch('spp.engine.pipeline.write_data')
@@ -218,6 +218,6 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                            }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run()
 
 
