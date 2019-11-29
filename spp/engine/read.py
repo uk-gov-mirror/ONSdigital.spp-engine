@@ -20,7 +20,7 @@ class PandasReader:
         :param kwargs: Other keyword arguments to pass to pd.read{format}()
         :returns Pandas DataFrame:
         """
-        return getattr(importlib.import_module('pandas'), f'read_{_get_file_format(path)}')(path, **kwargs)
+        return getattr(importlib.import_module('pandas'), "read_{}".format(_get_file_format(path)))(path, **kwargs)
 
     def __repr__(self):
         return 'PandasReader'
