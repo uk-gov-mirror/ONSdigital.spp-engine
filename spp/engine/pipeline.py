@@ -94,7 +94,7 @@ class PipelineMethod:
             raise e
         LOG.info("Writing outputs")
         LOG.debug("Writing outputs: {}".format(outputs))
-        if isinstance(outputs, Iterable):
+        if isinstance(outputs, list) or isinstance(outputs, tuple):
             for count,output in enumerate(outputs,start=1):
                 write_data(output,self.data_target+"/data"+str(count), platform, spark)
                 LOG.debug("Writing output: {}".format(output))
