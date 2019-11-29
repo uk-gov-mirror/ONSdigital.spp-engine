@@ -1,6 +1,5 @@
 import logging
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -29,9 +28,9 @@ def pandas_write(df, location, **kwargs):
 
 
 def _get_file_format(location):
-    #ToDo
-    format="parquet"
-    #return location.split('.')[-1]
+    # ToDo
+    format = "parquet"
+    # return location.split('.')[-1]
     return format
 
 

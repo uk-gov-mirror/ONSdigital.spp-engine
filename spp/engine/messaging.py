@@ -8,7 +8,6 @@ LOG = Logger(__name__).get()
 
 
 def is_valid_json(instance, schema):
-
     """
     Calls the jsonschema library to test an instance of JSON against a schema definition. Exceptions are logged, but
     not raised.
@@ -34,7 +33,6 @@ def is_valid_json(instance, schema):
 
 
 def write_queue(vendor_implementation, queue_resource, event):
-
     """
     Calls a given implementation to write to a message queue. Exceptions are logged, but not raised.
     :param vendor_implementation: Function that implements queue write
@@ -55,7 +53,6 @@ def write_queue(vendor_implementation, queue_resource, event):
 
 
 def write_queue_sqs(sqs_queue, event):
-
     """
     Calls the boto3 client library to send a message to an SQS queue.
     :param sqs_queue: URL for SQS queue

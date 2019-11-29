@@ -6,10 +6,8 @@ import sys
 from spp.utils.execution import construct_pipeline, run
 from spp.utils.logging import Logger
 
-
 import boto3
 from awsglue.utils import getResolvedOptions
-
 
 LOG = Logger(__name__).get()
 
@@ -22,6 +20,7 @@ config = json.loads(config_parameters_string)['pipeline']
 
 if config['spark']:
     from pyspark.sql import SparkSession
+
     spark = SparkSession.builder.appName('DTrade').getOrCreate()
 
 pipeline = construct_pipeline(config)

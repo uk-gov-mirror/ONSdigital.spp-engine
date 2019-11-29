@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Iterable
 from spp.engine.data_access import write_data, DataAccess
 from spp.utils.logging import Logger
 import importlib
@@ -26,7 +25,7 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, data_source,data_target, params=None):
+    def __init__(self, name, module, data_source, data_target, params=None):
         """
         Initialise the attributes of the class
         :param name: String
@@ -41,15 +40,18 @@ class PipelineMethod:
         self.params = params
         self.data_in = []
         self.data_target = data_target
-        da_key =[]
+        self.__populateDataAccess(data_source)
+
+    def __populateDataAccess(self, data_source):
+        da_key = []
         da_value = []
         for da in data_source:
             da_key.append(da['name'])
             tmp_sql = None
             if ('database' in da) and (da['database'] is not None):
-                tmp_sql = Query(database = da['database'],table = da['table'],select = da['select'],where=da['where'])
+                tmp_sql = Query(database=da['database'], table=da['table'], select=da['select'], where=da['where'])
             tmp_path = da['path']
-            da_value.append({'sql':tmp_sql,'path':tmp_path})
+            da_value.append({'sql': tmp_sql, 'path': tmp_path})
         data_source_tmp = dict(zip(da_key, da_value))
         for d_name, d_info in data_source_tmp.items():
             name = d_name
@@ -95,11 +97,11 @@ class PipelineMethod:
         LOG.info("Writing outputs")
         LOG.debug("Writing outputs: {}".format(outputs))
         if isinstance(outputs, list) or isinstance(outputs, tuple):
-            for count,output in enumerate(outputs,start=1):
-                write_data(output,self.data_target+"/data"+str(count), platform, spark)
+            for count, output in enumerate(outputs, start=1):
+                write_data(output, self.data_target + "/data" + str(count), platform, spark)
                 LOG.debug("Writing output: {}".format(output))
         else:
-            write_data(outputs,self.data_target, platform, spark)
+            write_data(outputs, self.data_target, platform, spark)
             LOG.debug("Writing output: {}".format(outputs))
         LOG.info("Finished writing outputs Method run complete")
 
@@ -112,8 +114,9 @@ class Pipeline:
     name = None
     methods = None
     spark = None
-    run_id =None
-    def __init__(self, name,run_id, platform=Platform.AWS, is_spark=False):
+    run_id = None
+
+    def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False):
         """
         Initialises the attributes of the class.
         :param name:
@@ -130,7 +133,7 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source,data_target_prefix, params):
+    def add_pipeline_methods(self, name, module, data_source, data_target_prefix, params):
         """
         Adds a new method to the pipeline
         :param name: String
@@ -148,14 +151,16 @@ class Pipeline:
         else:
             part_of_path = '/survey/'
 
-        data_target_path = data_target_prefix+part_of_path+name+file_separator+self.run_id
+        data_target_path = data_target_prefix + part_of_path + name + file_separator + self.run_id
         LOG.info("Adding Method to Pipeline")
-        LOG.debug("Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}, writing to {}.".format(name,
-                                                                                                            module,
-                                                                                                            params,
-                                                                                                            data_source,
-                                                                                                            data_target_path))
-        self.methods.append(PipelineMethod(name, module, data_source,data_target_path, params))
+        LOG.debug(
+            "Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}, writing to {}.".format(
+                name,
+                module,
+                params,
+                data_source,
+                data_target_path))
+        self.methods.append(PipelineMethod(name, module, data_source, data_target_path, params))
 
     def run(self, platform):
         """
