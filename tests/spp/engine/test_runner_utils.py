@@ -9,7 +9,7 @@ import pandas as pd
 from unittest.mock import patch
 from pyspark.sql import SparkSession
 
-from spp.utils.execution import construct_pipeline, run
+from spp.engine.pipeline import construct_pipeline
 from spp.engine.pipeline import Platform
 
 
@@ -43,14 +43,6 @@ def test_parse_config_bd():
         "param_2": "entity_name"
     }
 
-    # TODO: Add DataAccess parsing
-
-    with patch(
-        'spp.engine.data_access.DataAccess.read_data',
-        return_value=pipeline.spark.read.json('./tests/resources/data/dummy2.json')
-    ):
-        run(pipeline, test_bd_json['pipeline'])
-
 
 def test_parse_config_sd():
 
@@ -76,9 +68,3 @@ def test_parse_config_sd():
     }
 
     # TODO: Add DataAccess parsing
-
-    with patch(
-            'spp.engine.data_access.DataAccess.read_data',
-            return_value=pd.read_json('./tests/resources/data/dummy2.json', lines=True)
-    ):
-        run(pipeline, test_bd_json['pipeline'])

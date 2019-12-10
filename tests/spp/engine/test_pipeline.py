@@ -25,18 +25,7 @@ def test_aws_small_method(mock_class, mock_method):
     mock_class().read_data.return_value = pd.DataFrame({"old_col": pd.Series([1])})
 
     test_method = PipelineMethod("method_c", "tests.test_methods.sd.small_data",
-                                 [{"name": "df", "database": "test_db", "table": "test_table", "select":
-                                     [
-                                         "column_1",
-                                         "column_2"
-                                     ],
-                                  "where":
-                                      [{
-                                          "column": "column_1",
-                                          "condition":  "=",
-                                          "value":  100
-                                      }]
-                                 }],
+                                 [{"name": "df", "datafpqifq0": "dpadjiop"}],
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_method.run(Platform.AWS, None)
@@ -143,7 +132,7 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                        }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run()
 
 
 @patch('spp.engine.pipeline.write_data')
@@ -229,6 +218,6 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                            }],
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(Platform.AWS)
+    test_pipeline.run()
 
 
