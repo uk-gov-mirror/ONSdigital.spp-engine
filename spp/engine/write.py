@@ -24,7 +24,7 @@ def pandas_write(df, location, **kwargs):
     """
     _write_log(location)
     import s3fs  # Leave this in to check optional dependency explicitly
-    return getattr(df, f'to_{_get_file_format(location)}')(location, **kwargs)
+    return getattr(df, "to_{}".format(_get_file_format(location)))(location, **kwargs)
 
 
 def _get_file_format(location):
