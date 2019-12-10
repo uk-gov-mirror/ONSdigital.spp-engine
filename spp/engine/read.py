@@ -2,13 +2,11 @@ from spp.utils.query import Query
 import logging
 import importlib
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
 class PandasReader:
-
     def read_db(self, query, **kwargs):
         """ To be implemented by child classes """
         raise NotImplementedError('Abstract method.')
@@ -27,7 +25,6 @@ class PandasReader:
 
 
 class PandasAthenaReader(PandasReader):
-
     def read_db(self, query, **kwargs):
         """
         Reads an Athena table into a Pandas DataFrame using an SPP Query instance.
@@ -36,14 +33,13 @@ class PandasAthenaReader(PandasReader):
         """
         import awswrangler
         session = awswrangler.Session()
-        return session.pandas.read_sql_athena(sql=str(query)[:-1], **kwargs)
+        return session.pandas.read_sql_athena(sql=str(query)[:-1], database=query.database, **kwargs)
 
     def __repr__(self):
         return 'PandasAthenaReader'
 
 
 def pandas_read(cursor, reader=PandasReader(), **kwargs):
-
     """
     Reads data into a DataFrame using Pandas. If the cursor is an SPP Query, a database is queried and a
     PandasReader instance must be supplied which implements read_db(), otherwise the cursor string is treated like a
@@ -68,7 +64,6 @@ def pandas_read(cursor, reader=PandasReader(), **kwargs):
 
 
 def spark_read(spark, cursor, **kwargs):
-
     """
     Reads data into a DataFrame using Spark. If the cursor is an SPP Query, the Spark metastore is used,
     otherwise the cursor is treated like a file path.

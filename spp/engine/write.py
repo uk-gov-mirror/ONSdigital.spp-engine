@@ -1,6 +1,7 @@
-from spp.utils.logging import Logger
+import logging
 
-LOG = Logger(__name__).get()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def spark_write(df, location, **kwargs):
@@ -27,9 +28,12 @@ def pandas_write(df, location, **kwargs):
 
 
 def _get_file_format(location):
-    return location.split('.')[-1]
+    # ToDo
+    format = "parquet"
+    # return location.split('.')[-1]
+    return format
 
 
 def _write_log(location):
-    LOG.info(f"Writing to file")
-    LOG.info(f"Location: {location}")
+    logger.info(f"Writing to file")
+    logger.info(f"Location: {location}")

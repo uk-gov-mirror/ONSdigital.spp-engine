@@ -7,10 +7,12 @@
     "methods": [{
       "name": "method_a",
       "module": "tests.test_methods.bd.big_data",
+      "data_target_prefix": "s3://dtrades-assets/workflows",
       "data_access": [{
         "name": "df",
         "database": "test_db",
         "table": "test_table",
+        "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
         "select": [
           "column_1",
           "column_2"
@@ -30,8 +32,10 @@
       {
         "name": "method_b",
         "module": "tests.test_methods.bd.big_data",
+        "data_target_prefix": "s3://dtrades-assets/workflows",
         "data_access": [{
           "name": "df_1",
+          "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
           "database": "test_db_1",
           "table": "test_table_1",
           "select": [
@@ -46,6 +50,7 @@
         },
           {
             "name": "df_2",
+            "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy2.json",
             "database": "test_db_2",
             "table": "test_table_2",
             "select": [
