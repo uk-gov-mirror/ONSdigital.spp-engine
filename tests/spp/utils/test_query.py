@@ -7,7 +7,7 @@
 #  6. Has database and table single select single where
 #  7. has database and table list select list where
 
-from spp.engine.query import Query
+from spp.utils.query import Query
 
 
 def test_db_and_table():
@@ -34,8 +34,8 @@ def test_db_table_single_where():
 def test_db_table_list_where():
     expected_query = "SELECT * FROM test.test WHERE column_a > 500 AND column_b = this AND column_c < 100;"
     assert expected_query == str(Query("test", "test", where={"column_a": {"condition": ">", "value": "500"},
-                                                          "column_b": {"condition": "=", "value": "this"},
-                                                          "column_c": {"condition": "<", "value": "100"}}))
+                                                              "column_b": {"condition": "=", "value": "this"},
+                                                              "column_c": {"condition": "<", "value": "100"}}))
 
 
 def test_db_table_single_select_where():

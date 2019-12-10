@@ -1,11 +1,10 @@
 import os
-import logging
 import json
 from spp.engine.messaging import is_valid_json, write_queue
+from spp.utils.logging import Logger
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOG = Logger(__name__)
 
 
 def handler(event, context=None):

@@ -1,27 +1,27 @@
 from spp.engine import read
-from spp.engine.query import Query
+from spp.utils.query import Query
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from unittest.mock import patch
 
 
-def test_spark_read_db(spark_test_session):
+def test_spark_read_db(create_session):
 
-    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
+    df = create_session.read.csv('./tests/resources/data/dummy.csv')
     df.createOrReplaceGlobalTempView('view')
-    assert read.spark_read(spark_test_session, Query('global_temp', 'view', '*')).collect() == df.collect()
+    assert read.spark_read(create_session, Query('global_temp', 'view', '*')).collect() == df.collect()
 
 
-def test_spark_read_csv(spark_test_session):
+def test_spark_read_csv(create_session):
 
-    df = spark_test_session.read.csv('./tests/resources/data/dummy.csv')
-    assert read.spark_read(spark_test_session, './tests/resources/data/dummy.csv').collect() == df.collect()
+    df = create_session.read.csv('./tests/resources/data/dummy.csv')
+    assert read.spark_read(create_session, './tests/resources/data/dummy.csv').collect() == df.collect()
 
 
-def test_spark_read_json(spark_test_session):
+def test_spark_read_json(create_session):
 
-    df = spark_test_session.read.json('./tests/resources/data/dummy.json')
-    assert read.spark_read(spark_test_session, './tests/resources/data/dummy.json').collect() == df.collect()
+    df = create_session.read.json('./tests/resources/data/dummy.json')
+    assert read.spark_read(create_session, './tests/resources/data/dummy.json').collect() == df.collect()
 
 
 @patch('spp.engine.read.PandasAthenaReader.read_db')
@@ -36,7 +36,7 @@ def test_pandas_read_db(mock_instance_method):
 def test_pandas_read_db_not_implemented():
 
     from spp.engine.read import PandasReader
-    from spp.engine.query import Query
+    from spp.utils.query import Query
     raised = False
     try:
         read.pandas_read(Query('FAKEDB', 'FAKETABLE', ['col1', 'col2'], 'col1 = 1'), PandasReader())
