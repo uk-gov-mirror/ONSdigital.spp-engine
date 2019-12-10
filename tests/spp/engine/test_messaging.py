@@ -1,4 +1,5 @@
-from spp.engine.messaging import is_valid_json, write_queue
+from spp.engine.messaging import is_valid_json, write_queue, QueueWriter, SQSQueueWriter
+from unittest.mock import patch
 
 
 valid_schema = {
@@ -88,7 +89,8 @@ def test_garbled_json():
     assert not is_valid_json(instance, valid_schema)
 
 
-def test_write_queue_working_implementation():
+@patch('spp.engine.messaging.SQSQueueWriter.send_message')
+def test_write_queue_working_implementation(mock_instance_method):
 
     resource = "https://link/to/queue:0000"
     event = {
@@ -98,14 +100,13 @@ def test_write_queue_working_implementation():
         }
     }
 
-    def implementation(resource, event):
-        return {resource: event}
-
-    response = write_queue(implementation, resource, event)
+    mock_instance_method.return_value = {resource: event}
+    response = write_queue(resource, event, SQSQueueWriter())
     assert response == {resource: event}
 
 
-def test_write_queue_exception_raised():
+@patch('spp.engine.messaging.SQSQueueWriter.send_message')
+def test_write_queue_broken_implementation(mock_instance_method):
 
     resource = "https://link/to/queue:0000"
     event = {
@@ -115,8 +116,25 @@ def test_write_queue_exception_raised():
         }
     }
 
-    def implementation(resource, event):
-        raise Exception("broken implementation")
-
-    response = write_queue(implementation, resource, event)
+    mock_instance_method.side_effect = Exception("broken implementation")
+    response = write_queue(resource, event, SQSQueueWriter())
     assert response == {'Exception': 'Message not sent', 'Reason': 'broken implementation'}
+
+
+def test_write_queue_not_implemented():
+
+    resource = "https://link/to/queue:0000"
+    event = {
+        "method1": {
+            "param1": 1,
+            "param2": "2"
+        }
+    }
+
+    raised = False
+    try:
+        write_queue(resource, event, QueueWriter())
+    except NotImplementedError:
+        raised = True
+    finally:
+        assert raised
