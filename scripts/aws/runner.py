@@ -24,4 +24,5 @@ if config['spark']:
     spark = SparkSession.builder.appName('DTrade').getOrCreate()
 
 pipeline = construct_pipeline(config)
-run(pipeline, config)
+LOG.info("Running pipeline {}, run {}".format(pipeline.name, config['run_id']))
+pipeline.run(platform=config['platform'])

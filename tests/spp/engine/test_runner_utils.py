@@ -7,8 +7,7 @@
 import json
 from pyspark.sql import SparkSession
 
-from spp.utils.execution import construct_pipeline
-from spp.engine.pipeline import Platform
+from spp.engine.pipeline import Platform, construct_pipeline
 
 
 with open("./tests/resources/config/test_bd_pipeline.json") as f:

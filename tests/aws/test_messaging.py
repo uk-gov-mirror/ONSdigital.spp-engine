@@ -1,4 +1,4 @@
-from spp.engine.messaging import is_valid_json, write_queue
+from aws.messaging import is_valid_json, write_queue
 
 
 valid_schema = {
