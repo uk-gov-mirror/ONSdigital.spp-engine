@@ -96,14 +96,16 @@ class PipelineMethod:
             raise e
         LOG.info("Writing outputs")
         LOG.debug("Writing outputs: {}".format(outputs))
-        if isinstance(outputs, list) or isinstance(outputs, tuple):
-            for count, output in enumerate(outputs, start=1):
-                write_data(output, self.data_target + "/data" + str(count), platform, spark)
-                LOG.debug("Writing output: {}".format(output))
-        else:
-            write_data(outputs, self.data_target, platform, spark)
-            LOG.debug("Writing output: {}".format(outputs))
-        LOG.info("Finished writing outputs Method run complete")
+        if self.data_target is not None:
+            if isinstance(outputs, list) or isinstance(outputs, tuple):
+                for count, output in enumerate(outputs, start=1):
+                    # (output, data_target, platform, spark=None,counter=None):
+                    write_data(output=output, data_target=self.data_target, platform=platform, spark=spark, counter=count)
+                    LOG.debug("Writing output: {}".format(output))
+            else:
+                write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
+                LOG.debug("Writing output: {}".format(outputs))
+            LOG.info("Finished writing outputs Method run complete")
 
 
 class Pipeline:
@@ -133,25 +135,16 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source, data_target_prefix, params):
+    def add_pipeline_methods(self, name, module, data_source, data_target, params):
         """
         Adds a new method to the pipeline
         :param name: String
         :param module: String
         :param data_source: list of Dict[String, Dict]
-        :param data_target_prefix: target location prefix
+        :param data_target: dictionary of string related to write.such as location,format and partition column.
         :param params: Dict[String, Any]
         :return:
         """
-        part_of_path = ''
-        file_separator = '/'
-
-        if self.spark is not None:
-            part_of_path = '/admin/'
-        else:
-            part_of_path = '/survey/'
-
-        data_target_path = data_target_prefix + part_of_path + name + file_separator + self.run_id
         LOG.info("Adding Method to Pipeline")
         LOG.debug(
             "Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}, writing to {}.".format(
@@ -159,8 +152,8 @@ class Pipeline:
                 module,
                 params,
                 data_source,
-                data_target_path))
-        self.methods.append(PipelineMethod(name, module, data_source, data_target_path, params))
+               str(data_target)))
+        self.methods.append(PipelineMethod(name, module, data_source, data_target, params))
 
     def run(self, platform):
         """
@@ -176,7 +169,6 @@ class Pipeline:
 
 
 def construct_pipeline(config):
-
     LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
         config['name'], config['platform'], config['spark']
     ))
@@ -189,9 +181,19 @@ def construct_pipeline(config):
         LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
             method['name'], method['module'], method['data_access'], method['params']
         ))
+        if method['persist'] == 'Y':
+            write_data_to = method['data_write'][0]
+            print("data_write ::")
+            print(str(write_data_to))
+            print(type(write_data_to))
+            print(write_data_to['partition_by'])
+            print(type(write_data_to['partition_by']))
+        else:
+            write_data_to = None
+
         pipeline.add_pipeline_methods(
             name=method['name'], module=method['module'], data_source=method['data_access'],
-            data_target_prefix=method['data_target_prefix'], params=method['params'][0]
+            data_target=write_data_to, params=method['params'][0]
         )
 
     return pipeline

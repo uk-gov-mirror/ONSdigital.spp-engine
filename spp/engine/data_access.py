@@ -50,7 +50,7 @@ class DataAccess:
                 return pandas_read(cursor=self.query)
 
 
-def write_data(output, data_target, platform, spark=None):
+def write_data(output, data_target, platform, spark=None,counter=None):
     """
     This method may be removed as further requirements determine whether this should be a generic function
     :param output: Dataframe
@@ -62,7 +62,7 @@ def write_data(output, data_target, platform, spark=None):
     LOG.info("DataAccess: write data: ")
     if spark is not None:
         LOG.info("DataAccess: write spark dataframe")
-        spark_write(df=output, location=data_target)
+        spark_write(df=output, data_target=data_target,counter=counter)
         LOG.info("DataAccess: written spark dataframe successfully")
         return
     else:
