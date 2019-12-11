@@ -25,7 +25,7 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, data_source, data_target, params=None):
+    def __init__(self, name, module, data_source, data_target, write, params=None):
         """
         Initialise the attributes of the class
         :param name: String
@@ -37,6 +37,7 @@ class PipelineMethod:
         LOG.info("Initializing Method")
         self.method_name = name
         self.module_name = module
+        self.write = write
         self.params = params
         self.data_in = []
         self.data_target = data_target
@@ -94,17 +95,21 @@ class PipelineMethod:
         except Exception as e:
             LOG.exception("Issue calling method")
             raise e
-        LOG.info("Writing outputs")
-        LOG.debug("Writing outputs: {}".format(outputs))
-        if isinstance(outputs, list) or isinstance(outputs, tuple):
-            for count, output in enumerate(outputs, start=1):
-                write_data(output, self.data_target + "/data" + str(count), platform, spark)
-                LOG.debug("Writing output: {}".format(output))
-        else:
-            write_data(outputs, self.data_target, platform, spark)
-            LOG.debug("Writing output: {}".format(outputs))
-        LOG.info("Finished writing outputs Method run complete")
 
+        if self.write == True:
+            LOG.info("Writing outputs")
+            LOG.debug("Writing outputs: {}".format(outputs))
+            if isinstance(outputs, list) or isinstance(outputs, tuple):
+                for count, output in enumerate(outputs, start=1):
+                    write_data(output, self.data_target + "/data" + str(count), platform, spark)
+                    LOG.debug("Writing output: {}".format(output))
+            else:
+                write_data(outputs, self.data_target, platform, spark)
+                LOG.debug("Writing output: {}".format(outputs))
+            LOG.info("Finished writing outputs Method run complete")
+        else:
+            LOG.info("Returning outputs dataframe")
+            return outputs
 
 class Pipeline:
     """
@@ -133,7 +138,7 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source, data_target_prefix, params):
+    def add_pipeline_methods(self, name, module, data_source, data_target_prefix, write, params):
         """
         Adds a new method to the pipeline
         :param name: String
@@ -160,7 +165,7 @@ class Pipeline:
                 params,
                 data_source,
                 data_target_path))
-        self.methods.append(PipelineMethod(name, module, data_source, data_target_path, params))
+        self.methods.append(PipelineMethod(name, module, data_source, data_target_path, write, params))
 
     def run(self, platform):
         """
@@ -191,7 +196,7 @@ def construct_pipeline(config):
         ))
         pipeline.add_pipeline_methods(
             name=method['name'], module=method['module'], data_source=method['data_access'],
-            data_target_prefix=method['data_target_prefix'], params=method['params'][0]
+            data_target_prefix=method['data_target_prefix'], write=method['write'], params=method['params'][0]
         )
 
     return pipeline
