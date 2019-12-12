@@ -29,7 +29,7 @@ def test_aws_small_method(mock_class, mock_method):
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                   "condition": "=", "value": 100}]}],
-                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},
+                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},True,
                                  {"param_1": 0, "param_2": 1, "param_3": 3})
 
     test_method.run(p_module.Platform.AWS, None)
@@ -56,7 +56,7 @@ def test_aws_big_method(mock_class, mock_method, create_session):
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                   "condition": "=", "value": 100}]}],
-                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},
+                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},True,
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_method.run(p_module.Platform.AWS, create_session)
@@ -86,7 +86,7 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                          "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                         "condition": "=",
                                                                                         "value": 100}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       "s3://dtrades-assets/workflows",True,
                                        {"param_1": 0, "param_2": 1, "param_3": 3})
 
     test_pipeline.add_pipeline_methods("method_d", "tests.test_methods.sd.small_data",
@@ -98,7 +98,7 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                          "table": "test_table_2",
                                          "select": ["column_1", "column_2"],
                                          "where": [{"column": "column_2", "condition": "<", "value": 500}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       "s3://dtrades-assets/workflows",True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(p_module.Platform.AWS)
@@ -146,7 +146,7 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                          "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                         "condition": "=",
                                                                                         "value": 100}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       "s3://dtrades-assets/workflows",True,
                                        {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_pipeline.add_pipeline_methods("method_b", "tests.test_methods.bd.big_data",
@@ -158,7 +158,7 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                          "table": "test_table_2",
                                          "select": ["column_1", "column_2"],
                                          "where": [{"column": "column_2", "condition": "<", "value": 500}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       "s3://dtrades-assets/workflows",True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(p_module.Platform.AWS)

@@ -12,10 +12,9 @@ def spark_write(df, data_target, counter,**kwargs):
     :param kwargs: Other keyword arguments to pass to df.write.save()
     """
    # _write_log(location)
-    if counter >= 1:
+    tmp_path =  ''
+    if isinstance(counter, int) & (counter >= 1):
         tmp_path =   "/data" + str(counter)
-    else:
-        tmp_path =  ''
 
     df.repartition(*data_target['partition_by']).write.save(path = data_target['location']+tmp_path, format=data_target['format'], partitionBy= data_target['partition_by'], **kwargs)
 

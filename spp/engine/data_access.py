@@ -50,7 +50,7 @@ class DataAccess:
                 return pandas_read(cursor=self.query)
 
 
-def write_data(output, data_target, platform, spark=None,counter=None):
+def write_data(output, data_target, platform, spark=None,counter=0):
     """
     This method may be removed as further requirements determine whether this should be a generic function
     :param output: Dataframe

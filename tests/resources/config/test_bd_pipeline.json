@@ -28,7 +28,7 @@
         "param_2": "col_2",
         "param_3": "col_3"
       }],
-      "persist":"Y",
+      "write": "True",
       "data_write":[{
         "location":"s3://dtrades-assets/workflows",
         "format":"parquet",
@@ -73,7 +73,7 @@
           "param_1": "reporting_date",
           "param_2": "entity_name"
         }],
-        "persist":"Y",
+        "write": "True",
         "data_write":[{
           "location":"s3://dtrades-assets/workflows",
           "format":"parquet",
