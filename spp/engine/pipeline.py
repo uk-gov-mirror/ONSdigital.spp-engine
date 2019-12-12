@@ -25,7 +25,7 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, data_source, data_target, params=None):
+    def __init__(self, name, module, data_source, data_target, write, params=None):
         """
         Initialise the attributes of the class
         :param name: String
@@ -37,6 +37,7 @@ class PipelineMethod:
         LOG.info("Initializing Method")
         self.method_name = name
         self.module_name = module
+        self.write = write
         self.params = params
         self.data_in = []
         self.data_target = data_target
@@ -94,19 +95,22 @@ class PipelineMethod:
         except Exception as e:
             LOG.exception("Issue calling method")
             raise e
-        LOG.info("Writing outputs")
-        LOG.debug("Writing outputs: {}".format(outputs))
-        if self.data_target is not None:
-            if isinstance(outputs, list) or isinstance(outputs, tuple):
-                for count, output in enumerate(outputs, start=1):
-                    # (output, data_target, platform, spark=None,counter=None):
-                    write_data(output=output, data_target=self.data_target, platform=platform, spark=spark, counter=count)
-                    LOG.debug("Writing output: {}".format(output))
-            else:
-                write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
-                LOG.debug("Writing output: {}".format(outputs))
-            LOG.info("Finished writing outputs Method run complete")
-
+        if self.write == True:
+            LOG.info("Writing outputs")
+            LOG.debug("Writing outputs: {}".format(outputs))
+            if self.data_target is not None:
+                if isinstance(outputs, list) or isinstance(outputs, tuple):
+                    for count, output in enumerate(outputs, start=1):
+                        # (output, data_target, platform, spark=None,counter=None):
+                        write_data(output=output, data_target=self.data_target, platform=platform, spark=spark, counter=count)
+                        LOG.debug("Writing output: {}".format(output))
+                else:
+                    write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
+                    LOG.debug("Writing output: {}".format(outputs))
+                LOG.info("Finished writing outputs Method run complete")
+        else:
+            LOG.info("Returning outputs dataframe")
+            return outputs
 
 class Pipeline:
     """
@@ -135,7 +139,7 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source, data_target, params):
+    def add_pipeline_methods(self, name, module, data_source, data_target, write, params):
         """
         Adds a new method to the pipeline
         :param name: String
@@ -152,8 +156,8 @@ class Pipeline:
                 module,
                 params,
                 data_source,
-               str(data_target)))
-        self.methods.append(PipelineMethod(name, module, data_source, data_target, params))
+                str(data_target)))
+        self.methods.append(PipelineMethod(name, module, data_source, data_target, write,  params))
 
     def run(self, platform):
         """
@@ -169,6 +173,7 @@ class Pipeline:
 
 
 def construct_pipeline(config):
+
     LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
         config['name'], config['platform'], config['spark']
     ))
@@ -181,7 +186,7 @@ def construct_pipeline(config):
         LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
             method['name'], method['module'], method['data_access'], method['params']
         ))
-        if method['persist'] == 'Y':
+        if method['write']:
             write_data_to = method['data_write'][0]
             print("data_write ::")
             print(str(write_data_to))
@@ -193,7 +198,7 @@ def construct_pipeline(config):
 
         pipeline.add_pipeline_methods(
             name=method['name'], module=method['module'], data_source=method['data_access'],
-            data_target=write_data_to, params=method['params'][0]
+            data_target=write_data_to, write=method['write'], params=method['params'][0]
         )
 
     return pipeline
