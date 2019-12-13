@@ -3,6 +3,7 @@ from spp.engine.write import spark_write, pandas_write
 from spp.utils.query import Query
 import spp.engine.pipeline
 from spp.utils.logging import Logger
+import pyspark.sql.functions as f
 
 LOG = Logger(__name__).get()
 
@@ -50,7 +51,7 @@ class DataAccess:
                 return pandas_read(cursor=self.query)
 
 
-def write_data(output, data_target, platform, spark=None,counter=0):
+def write_data(output, data_target, platform, spark=None, counter=0):
     """
     This method may be removed as further requirements determine whether this should be a generic function
     :param output: Dataframe
@@ -62,7 +63,8 @@ def write_data(output, data_target, platform, spark=None,counter=0):
     LOG.info("DataAccess: write data: ")
     if spark is not None:
         LOG.info("DataAccess: write spark dataframe")
-        spark_write(df=output, data_target=data_target,counter=counter)
+
+        spark_write(df=output, data_target=data_target, counter=counter)
         LOG.info("DataAccess: written spark dataframe successfully")
         return
     else:
@@ -70,3 +72,12 @@ def write_data(output, data_target, platform, spark=None,counter=0):
         pandas_write(df=output, location=data_target)
         LOG.info("DataAccess: written pandas dataframe successfully")
         return
+
+
+def isPartitionColumnExists(df, list_partition_column, run_id,is_spark):
+    if (df is not None) and (list_partition_column is not None) and is_spark:
+        columns = df.columns
+        for i in list_partition_column:
+            if not str(i) in columns and str(i) == 'run_id':
+                df = df.withColumn('run_id', f.lit(run_id))
+    return df

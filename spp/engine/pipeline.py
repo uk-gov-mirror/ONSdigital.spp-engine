@@ -1,5 +1,5 @@
 from enum import Enum
-from spp.engine.data_access import write_data, DataAccess
+from spp.engine.data_access import write_data, DataAccess, isPartitionColumnExists
 from spp.utils.logging import Logger
 import importlib
 
@@ -25,7 +25,7 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, data_source, data_target, write, params=None):
+    def __init__(self, run_id, name, module, data_source, data_target, write, params=None):
         """
         Initialise the attributes of the class
         :param name: String
@@ -40,6 +40,7 @@ class PipelineMethod:
         self.write = write
         self.params = params
         self.data_in = []
+        self.run_id = run_id
         self.data_target = data_target
         self.__populateDataAccess(data_source)
 
@@ -95,22 +96,28 @@ class PipelineMethod:
         except Exception as e:
             LOG.exception("Issue calling method")
             raise e
-        if self.write == True:
+
+        if self.write:
             LOG.info("Writing outputs")
             LOG.debug("Writing outputs: {}".format(outputs))
             if self.data_target is not None:
+                is_spark = True if spark is not None else False
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
                     for count, output in enumerate(outputs, start=1):
                         # (output, data_target, platform, spark=None,counter=None):
-                        write_data(output=output, data_target=self.data_target, platform=platform, spark=spark, counter=count)
+                        output = isPartitionColumnExists(output, self.data_target['partition_by'], str(self.run_id),is_spark)
+                        write_data(output=output, data_target=self.data_target, platform=platform, spark=spark,
+                                   counter=count)
                         LOG.debug("Writing output: {}".format(output))
                 else:
+                    outputs = isPartitionColumnExists(outputs, self.data_target['partition_by'], str(self.run_id),is_spark)
                     write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
                     LOG.debug("Writing output: {}".format(outputs))
                 LOG.info("Finished writing outputs Method run complete")
         else:
             LOG.info("Returning outputs dataframe")
             return outputs
+
 
 class Pipeline:
     """
@@ -139,7 +146,7 @@ class Pipeline:
             self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source, data_target, write, params):
+    def add_pipeline_methods(self, run_id, name, module, data_source, data_target, write, params):
         """
         Adds a new method to the pipeline
         :param name: String
@@ -157,7 +164,7 @@ class Pipeline:
                 params,
                 data_source,
                 str(data_target)))
-        self.methods.append(PipelineMethod(name, module, data_source, data_target, write,  params))
+        self.methods.append(PipelineMethod(run_id, name, module, data_source, data_target, write, params))
 
     def run(self, platform):
         """
@@ -173,7 +180,6 @@ class Pipeline:
 
 
 def construct_pipeline(config):
-
     LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
         config['name'], config['platform'], config['spark']
     ))
@@ -188,17 +194,11 @@ def construct_pipeline(config):
         ))
         if method['write']:
             write_data_to = method['data_write'][0]
-            print("data_write ::")
-            print(str(write_data_to))
-            print(type(write_data_to))
-            print(write_data_to['partition_by'])
-            print(type(write_data_to['partition_by']))
         else:
             write_data_to = None
-
-        pipeline.add_pipeline_methods(
-            name=method['name'], module=method['module'], data_source=method['data_access'],
-            data_target=write_data_to, write=method['write'], params=method['params'][0]
-        )
+        pipeline.add_pipeline_methods(run_id=config['run_id'],
+                                      name=method['name'], module=method['module'], data_source=method['data_access'],
+                                      data_target=write_data_to, write=method['write'], params=method['params'][0]
+                                      )
 
     return pipeline

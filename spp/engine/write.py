@@ -4,19 +4,21 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def spark_write(df, data_target, counter,**kwargs):
+def spark_write(df, data_target, counter, **kwargs):
     """
     Writes a Spark DataFrame to a file.
     :param df: Spark DataFrame
     :param location: File location
     :param kwargs: Other keyword arguments to pass to df.write.save()
     """
-   # _write_log(location)
-    tmp_path =  ''
+    # _write_log(location)
+    tmp_path = ''
     if isinstance(counter, int) & (counter >= 1):
-        tmp_path =   "/data" + str(counter)
-
-    df.repartition(*data_target['partition_by']).write.save(path = data_target['location']+tmp_path, format=data_target['format'], partitionBy= data_target['partition_by'], **kwargs)
+        tmp_path = "/data" + str(counter)
+    df.repartition(*data_target['partition_by']).write.save(path=data_target['location'] + tmp_path,
+                                                            format=data_target['format'],
+                                                            partitionBy=data_target['partition_by'],
+                                                            mode=data_target['save_mode'], **kwargs)
 
 
 def pandas_write(df, location, **kwargs):

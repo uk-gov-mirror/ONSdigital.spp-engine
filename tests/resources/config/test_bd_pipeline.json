@@ -32,6 +32,7 @@
       "data_write":[{
         "location":"s3://dtrades-assets/workflows",
         "format":"parquet",
+        "save_mode":"append",
       "partition_by":["run_id"]
       }]
     },
@@ -77,6 +78,7 @@
         "data_write":[{
           "location":"s3://dtrades-assets/workflows",
           "format":"parquet",
+          "save_mode":"append",
           "partition_by":["run_id"]
         }]
       }]
