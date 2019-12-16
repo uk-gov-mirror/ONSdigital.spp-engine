@@ -63,7 +63,6 @@ def write_data(output, data_target, platform, spark=None, counter=0):
     LOG.info("DataAccess: write data: ")
     if spark is not None:
         LOG.info("DataAccess: write spark dataframe")
-
         spark_write(df=output, data_target=data_target, counter=counter)
         LOG.info("DataAccess: written spark dataframe successfully")
         return
@@ -77,7 +76,8 @@ def write_data(output, data_target, platform, spark=None, counter=0):
 def isPartitionColumnExists(df, list_partition_column, run_id,is_spark):
     if (df is not None) and (list_partition_column is not None) and is_spark:
         columns = df.columns
-        for i in list_partition_column:
-            if not str(i) in columns and str(i) == 'run_id':
-                df = df.withColumn('run_id', f.lit(run_id))
+        if not 'run_id' in columns:
+            df = df.withColumn('run_id', f.lit(run_id))
+        elif 'run_id' in columns:
+            df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
     return df
