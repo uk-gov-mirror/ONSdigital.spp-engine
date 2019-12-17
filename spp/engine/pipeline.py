@@ -2,6 +2,7 @@ from enum import Enum
 from spp.engine.data_access import write_data, DataAccess, isPartitionColumnExists
 from spp.utils.logging import Logger
 import importlib
+from spp.aws.glue_crawler import crawl
 
 from spp.utils.query import Query
 
@@ -110,10 +111,14 @@ class PipelineMethod:
                                    counter=count)
                         LOG.debug("Writing output: {}".format(output))
                 else:
+                    print('pipelinemethod :: start..')
+                    outputs.show(4)
+                    outputs.printSchema()
                     outputs = isPartitionColumnExists(outputs, self.data_target['partition_by'], str(self.run_id),is_spark)
                     write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
                     LOG.debug("Writing output: {}".format(outputs))
                 LOG.info("Finished writing outputs Method run complete")
+            crawl(crawler_name='dtrades-admin')
         else:
             LOG.info("Returning outputs dataframe")
             return outputs
