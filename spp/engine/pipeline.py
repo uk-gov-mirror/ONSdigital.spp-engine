@@ -66,7 +66,7 @@ class PipelineMethod:
                     query = d_info[key]
             self.data_in.append(DataAccess(name, query))
 
-    def run(self, platform, spark=None):
+    def run(self, platform, crawler_name, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
         :param platform:
@@ -118,7 +118,7 @@ class PipelineMethod:
                     write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
                     LOG.debug("Writing output: {}".format(outputs))
                 LOG.info("Finished writing outputs Method run complete")
-            crawl(crawler_name='dtrades-admin')
+            crawl(crawler_name=crawler_name)
         else:
             LOG.info("Returning outputs dataframe")
             return outputs
@@ -171,7 +171,7 @@ class Pipeline:
                 str(data_target)))
         self.methods.append(PipelineMethod(run_id, name, module, data_source, data_target, write, params))
 
-    def run(self, platform):
+    def run(self, platform, crawler_name):
         """
         Runs the methods of the pipeline
         :param platform: Platform
@@ -180,7 +180,7 @@ class Pipeline:
         LOG.info("Running Pipeline: {}".format(self.name))
         for method in self.methods:
             LOG.info("Running Method: {}".format(method.method_name))
-            method.run(platform, self.spark)
+            method.run(platform, crawler_name, self.spark)
             LOG.info("Method Finished: {}".format(method.method_name))
 
 
