@@ -1,7 +1,8 @@
 from enum import Enum
-from spp.engine.data_access import write_data, DataAccess
+from spp.engine.data_access import write_data, DataAccess, isPartitionColumnExists
 from spp.utils.logging import Logger
 import importlib
+from spp.aws.glue_crawler import crawl
 
 from spp.utils.query import Query
 
@@ -25,7 +26,7 @@ class PipelineMethod:
     params = None
     data_in = None
 
-    def __init__(self, name, module, data_source, data_target, params=None):
+    def __init__(self, run_id, name, module, data_source, data_target, write, params=None):
         """
         Initialise the attributes of the class
         :param name: String
@@ -37,8 +38,10 @@ class PipelineMethod:
         LOG.info("Initializing Method")
         self.method_name = name
         self.module_name = module
+        self.write = write
         self.params = params
         self.data_in = []
+        self.run_id = run_id
         self.data_target = data_target
         self.__populateDataAccess(data_source)
 
@@ -63,7 +66,7 @@ class PipelineMethod:
                     query = d_info[key]
             self.data_in.append(DataAccess(name, query))
 
-    def run(self, platform, spark=None):
+    def run(self, platform, crawler_name, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
         :param platform:
@@ -94,16 +97,28 @@ class PipelineMethod:
         except Exception as e:
             LOG.exception("Issue calling method")
             raise e
-        LOG.info("Writing outputs")
-        LOG.debug("Writing outputs: {}".format(outputs))
-        if isinstance(outputs, list) or isinstance(outputs, tuple):
-            for count, output in enumerate(outputs, start=1):
-                write_data(output, self.data_target + "/data" + str(count), platform, spark)
-                LOG.debug("Writing output: {}".format(output))
+
+        if self.write:
+            LOG.info("Writing outputs")
+            LOG.debug("Writing outputs: {}".format(outputs))
+            if self.data_target is not None:
+                is_spark = True if spark is not None else False
+                if isinstance(outputs, list) or isinstance(outputs, tuple):
+                    for count, output in enumerate(outputs, start=1):
+                        # (output, data_target, platform, spark=None,counter=None):
+                        output = isPartitionColumnExists(output, self.data_target['partition_by'], str(self.run_id),is_spark)
+                        write_data(output=output, data_target=self.data_target, platform=platform, spark=spark,
+                                   counter=count)
+                        LOG.debug("Writing output: {}".format(output))
+                else:
+                    outputs = isPartitionColumnExists(outputs, self.data_target['partition_by'], str(self.run_id),is_spark)
+                    write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
+                    LOG.debug("Writing output: {}".format(outputs))
+                LOG.info("Finished writing outputs Method run complete")
+            crawl(crawler_name=crawler_name)
         else:
-            write_data(outputs, self.data_target, platform, spark)
-            LOG.debug("Writing output: {}".format(outputs))
-        LOG.info("Finished writing outputs Method run complete")
+            LOG.info("Returning outputs dataframe")
+            return outputs
 
 
 class Pipeline:
@@ -131,27 +146,19 @@ class Pipeline:
             LOG.info("Starting Spark Session for APP {}".format(name))
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
+            #self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
         self.methods = []
 
-    def add_pipeline_methods(self, name, module, data_source, data_target_prefix, params):
+    def add_pipeline_methods(self, run_id, name, module, data_source, data_target, write, params):
         """
         Adds a new method to the pipeline
         :param name: String
         :param module: String
         :param data_source: list of Dict[String, Dict]
-        :param data_target_prefix: target location prefix
+        :param data_target: dictionary of string related to write.such as location,format and partition column.
         :param params: Dict[String, Any]
         :return:
         """
-        part_of_path = ''
-        file_separator = '/'
-
-        if self.spark is not None:
-            part_of_path = '/admin/'
-        else:
-            part_of_path = '/survey/'
-
-        data_target_path = data_target_prefix + part_of_path + name + file_separator + self.run_id
         LOG.info("Adding Method to Pipeline")
         LOG.debug(
             "Adding Method: {} , from Module {}, With parameters {}, retrieving data from {}, writing to {}.".format(
@@ -159,10 +166,10 @@ class Pipeline:
                 module,
                 params,
                 data_source,
-                data_target_path))
-        self.methods.append(PipelineMethod(name, module, data_source, data_target_path, params))
+                str(data_target)))
+        self.methods.append(PipelineMethod(run_id, name, module, data_source, data_target, write, params))
 
-    def run(self, platform):
+    def run(self, platform, crawler_name):
         """
         Runs the methods of the pipeline
         :param platform: Platform
@@ -171,12 +178,11 @@ class Pipeline:
         LOG.info("Running Pipeline: {}".format(self.name))
         for method in self.methods:
             LOG.info("Running Method: {}".format(method.method_name))
-            method.run(platform, self.spark)
+            method.run(platform, crawler_name, self.spark)
             LOG.info("Method Finished: {}".format(method.method_name))
 
 
 def construct_pipeline(config):
-
     LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
         config['name'], config['platform'], config['spark']
     ))
@@ -189,9 +195,13 @@ def construct_pipeline(config):
         LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
             method['name'], method['module'], method['data_access'], method['params']
         ))
-        pipeline.add_pipeline_methods(
-            name=method['name'], module=method['module'], data_source=method['data_access'],
-            data_target_prefix=method['data_target_prefix'], params=method['params'][0]
-        )
+        if method['write']:
+            write_data_to = method['data_write'][0]
+        else:
+            write_data_to = None
+        pipeline.add_pipeline_methods(run_id=config['run_id'],
+                                      name=method['name'], module=method['module'], data_source=method['data_access'],
+                                      data_target=write_data_to, write=method['write'], params=method['params'][0]
+                                      )
 
     return pipeline

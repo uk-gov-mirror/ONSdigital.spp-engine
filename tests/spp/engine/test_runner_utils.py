@@ -9,7 +9,6 @@ from pyspark.sql import SparkSession
 
 from spp.engine.pipeline import Platform, construct_pipeline
 
-
 with open("./tests/resources/config/test_bd_pipeline.json") as f:
     test_bd_json = json.load(f)
 
@@ -18,7 +17,6 @@ with open("./tests/resources/config/test_sd_pipeline.json") as f:
 
 
 def test_parse_config_bd():
-
     pipeline = construct_pipeline(test_bd_json['pipeline'])
 
     assert pipeline.name == 'test_pipeline'
@@ -44,7 +42,6 @@ def test_parse_config_bd():
 
 
 def test_parse_config_sd():
-
     pipeline = construct_pipeline(test_sd_json['pipeline'])
 
     assert pipeline.name == 'test_sd_pipeline'
