@@ -5,3 +5,4 @@ tmp/
 build/
 dist/
 spp_engine.egg-info/
+spp-engine.egg-info/

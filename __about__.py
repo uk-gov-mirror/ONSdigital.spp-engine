@@ -6,7 +6,7 @@ __all__ = [
     "__pkgrepo__"
 ]
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 __author__ = 'Data Processing and Methods'
 __email__ = 'DL_SMLHELP@ons.gov.uk'
 __gitrepo__ = 'https://github.com/ONSdigital/spp-engine'

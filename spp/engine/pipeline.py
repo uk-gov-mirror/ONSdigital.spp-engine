@@ -111,9 +111,6 @@ class PipelineMethod:
                                    counter=count)
                         LOG.debug("Writing output: {}".format(output))
                 else:
-                    print('pipelinemethod :: start..')
-                    outputs.show(4)
-                    outputs.printSchema()
                     outputs = isPartitionColumnExists(outputs, self.data_target['partition_by'], str(self.run_id),is_spark)
                     write_data(output=outputs, data_target=self.data_target, platform=platform, spark=spark)
                     LOG.debug("Writing output: {}".format(outputs))
@@ -149,6 +146,7 @@ class Pipeline:
             LOG.info("Starting Spark Session for APP {}".format(name))
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
+            #self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
         self.methods = []
 
     def add_pipeline_methods(self, run_id, name, module, data_source, data_target, write, params):
