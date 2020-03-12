@@ -50,7 +50,7 @@ class DataAccess:
                 return pandas_read(cursor=self.query)
 
 
-def write_data(output, data_target, platform, spark=None):
+def write_data(output, data_target, platform, spark=None, counter=0):
     """
     This method may be removed as further requirements determine whether this should be a generic function
     :param output: Dataframe
@@ -62,11 +62,35 @@ def write_data(output, data_target, platform, spark=None):
     LOG.info("DataAccess: write data: ")
     if spark is not None:
         LOG.info("DataAccess: write spark dataframe")
-        spark_write(df=output, location=data_target)
+        spark_write(df=output, data_target=data_target, counter=counter)
         LOG.info("DataAccess: written spark dataframe successfully")
         return
     else:
         LOG.info("DataAccess: write pandas dataframe")
-        pandas_write(df=output, location=data_target)
+        pandas_write(df=output, data_target=data_target)
         LOG.info("DataAccess: written pandas dataframe successfully")
         return
+
+
+def isPartitionColumnExists(df, list_partition_column, run_id, is_spark):
+    LOG.info('isPartitionColumnExists :: start..')
+    if (df is not None) and (list_partition_column is not None) and is_spark:
+        import pyspark.sql.functions as f
+        columns = df.columns
+        if not 'run_id' in columns:
+            LOG.info('inside spark run_id not exist')
+            df = df.withColumn('run_id', f.lit(run_id))
+        elif 'run_id' in columns:
+            LOG.info('inside spark run_id exist')
+            df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
+    elif (df is not None) and (list_partition_column is not None) and not is_spark:
+        columns = list(df.columns)
+        if not 'run_id' in columns:
+            LOG.info('inside pandas run_id not exist')
+            df['run_id'] = run_id
+        elif 'run_id' in columns:
+            LOG.info('inside pandas run_id exist')
+            df = df.drop(columns=['run_id'])
+            df['run_id'] = run_id
+    LOG.info('isPartitionColumnExists :: end..')
+    return df
