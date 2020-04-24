@@ -4,9 +4,6 @@ from spp.utils.query import Query
 import spp.engine.pipeline
 from spp.utils.logging import Logger
 
-# import pyspark.sql.functions as f
-
-
 LOG = Logger(__name__).get()
 
 
@@ -76,22 +73,24 @@ def write_data(output, data_target, platform, spark=None, counter=0):
 
 
 def isPartitionColumnExists(df, list_partition_column, run_id, is_spark):
-    #print('isPartitionColumnExists :: start..')
-    # df.show(2)
-    # df.printSchema()
+    LOG.info('isPartitionColumnExists :: start..')
     if (df is not None) and (list_partition_column is not None) and is_spark:
         import pyspark.sql.functions as f
         columns = df.columns
         if not 'run_id' in columns:
-            print('inside spark run_id not exist')
+            LOG.info('inside spark run_id not exist')
             df = df.withColumn('run_id', f.lit(run_id))
         elif 'run_id' in columns:
-            print('inside spark run_id exist')
+            LOG.info('inside spark run_id exist')
             df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
-    elif (df is not None) and (list_partition_column is not None):
-        print('inside pandas run_id not exist')
-        df['run_id'] = run_id
-    print('isPartitionColumnExists :: end..')
-    # df.show(3)
-    # df.printSchema()
+    elif (df is not None) and (list_partition_column is not None) and not is_spark:
+        columns = list(df.columns)
+        if not 'run_id' in columns:
+            LOG.info('inside pandas run_id not exist')
+            df['run_id'] = run_id
+        elif 'run_id' in columns:
+            LOG.info('inside pandas run_id exist')
+            df = df.drop(columns=['run_id'])
+            df['run_id'] = run_id
+    LOG.info('isPartitionColumnExists :: end..')
     return df

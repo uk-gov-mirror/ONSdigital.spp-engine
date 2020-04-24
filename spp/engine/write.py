@@ -1,6 +1,6 @@
 import logging
-import  boto3
-from spp.aws.s3.write_to_s3 import write_pandas_to_s3
+
+from spp.aws.s3.write_to_s3 import write_pandasDf_to_s3, write_sparkDf_to_s3
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -17,10 +17,10 @@ def spark_write(df, data_target, counter, **kwargs):
     tmp_path = ''
     if isinstance(counter, int) & (counter >= 1):
         tmp_path = "/data" + str(counter)
-    df.repartition(*data_target['partition_by']).write.save(path=data_target['location'] + tmp_path,
-                                                            format=data_target['format'],
-                                                            partitionBy=data_target['partition_by'],
-                                                            mode=data_target['save_mode'], **kwargs)
+    data_target['location'] = data_target['location'] + tmp_path
+    write_sparkDf_to_s3(df, data_target)
+
+    return
 
 
 def pandas_write(df, data_target, **kwargs):
@@ -33,7 +33,7 @@ def pandas_write(df, data_target, **kwargs):
     # _write_log(location)
     # import s3fs  # Leave this in to check optional dependency explicitly
     # return getattr(df, "to_{}".format(_get_file_format(location)))(location, **kwargs)
-    write_pandas_to_s3(df,data_target)
+    write_pandasDf_to_s3(df,data_target)
 
 def _get_file_format(location):
     # ToDo
