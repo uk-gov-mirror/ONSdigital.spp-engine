@@ -1,5 +1,4 @@
 from spp.utils.logging import Logger
-import logging
 
 LOG = Logger(__name__).get()
 
@@ -54,13 +53,15 @@ def write_pandasDf_to_s3(df, data_target):
 
 
 def write_sparkDf_to_s3(df, data_target):
-    LOG.info('Inside spark write :: No dynamic dataframe  ... ')
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
     from awsglue.dynamicframe import DynamicFrame
-
+    #df.show(1)
     glueContext = GlueContext(SparkContext.getOrCreate())
+    LOG.info('Inside write_sparkDf_to_s3 :: Created glueContext ... ')
     dynamic_df_out = DynamicFrame.fromDF(df, glueContext, "dynamic_df_out")
+    LOG.info('Inside write_sparkDf_to_s3 :: Convert spark df to dynamic df completed ... ')
+    LOG.info('Inside write_sparkDf_to_s3 ::  partition :: string : .... ' + str(data_target['partition_by']))
     LOG.info('Inside write_sparkDf_to_s3 :: writing to location ... ' + data_target['location'])
     block_size = 128 * 1024 * 1024
     page_size = 1024 * 1024
