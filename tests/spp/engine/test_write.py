@@ -3,55 +3,71 @@ import pandas as pd
 import os
 import shutil
 
-
 suite_location = './tests/tmp'
 
 
 def test_spark_write_csv(create_session):
-
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file.csv"
-
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["_c0"]
+    }
     try:
-        spark_write(df, test_location)
+        spark_write(df, test_target, counter=0)
         assert os.path.exists(test_location)
     finally:
         shutil.rmtree(suite_location)
 
 
 def test_spark_write_json(create_session):
-
     df = create_session.read.json('./tests/resources/data/dummy.json')
     test_location = f"{suite_location}/test_spark_write_file.json"
-
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["a"]
+    }
     try:
-        spark_write(df, test_location)
+        spark_write(df, test_target, counter=0)
         assert os.path.exists(test_location)
     finally:
         shutil.rmtree(suite_location)
 
 
 def test_spark_write_file_with_partitions(create_session):
-
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file_with_partitions.csv"
-
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["_c0"]
+    }
     try:
-        spark_write(df, test_location, partitions=['_c0'])
+        spark_write(df, test_target, counter=0, partitions=['_c0'])
         assert os.path.exists(test_location)
     finally:
         shutil.rmtree(suite_location)
 
 
 def test_pandas_write_parquet():
-
     df = pd.read_csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_pandas_write_file.parquet"
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["_c0"]
+    }
 
     try:
         if not os.path.exists(suite_location):
             os.mkdir(suite_location)
-        pandas_write(df, test_location)
+        pandas_write(df, test_target, counter=0)
         assert os.path.exists(test_location)
     finally:
         shutil.rmtree(suite_location)

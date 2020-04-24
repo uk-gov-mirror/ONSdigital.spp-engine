@@ -24,12 +24,18 @@ def test_aws_small_method(mock_class, mock_method):
     mock_class.return_value.name = "df"
     mock_class().pipeline_read_data.return_value = pd.DataFrame({"old_col": pd.Series([2])})
 
-    test_method = PipelineMethod("method_c", "tests.test_methods.sd.small_data",
+    test_method = PipelineMethod("run_id", "method_c", "tests.test_methods.sd.small_data",
                                  [{"name": "df", "database": "test_db", "table": "test_table",
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                   "condition": "=", "value": 100}]}],
-                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},
+                                 {
+                                     "location": "s3://dtrades-assets/workflows",
+                                     "format": "parquet",
+                                     "save_mode": "append",
+                                     "partition_by": ["run_id"]
+                                 },
+                                 True,
                                  {"param_1": 0, "param_2": 1, "param_3": 3})
 
     test_method.run(p_module.Platform.AWS, None)
@@ -51,12 +57,17 @@ def test_aws_big_method(mock_class, mock_method, create_session):
     sdf = create_session.createDataFrame(data, schema)
 
     mock_class().pipeline_read_data.return_value = sdf
-    test_method = PipelineMethod("method_a", "tests.test_methods.bd.big_data",
+    test_method = PipelineMethod("run_id", "method_a", "tests.test_methods.bd.big_data",
                                  [{"name": "df", "database": "test_db", "table": "test_table",
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                   "condition": "=", "value": 100}]}],
-                                 {"data_target_prefix": "s3://dtrades-assets/workflows"},
+                                 {
+                                     "location": "s3://dtrades-assets/workflows",
+                                     "format": "parquet",
+                                     "save_mode": "append",
+                                     "partition_by": ["run_id"]
+                                 }, True,
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
     test_method.run(p_module.Platform.AWS, create_session)
@@ -80,16 +91,21 @@ def test_aws_small_pipeline(mock_class, mock_method):
 
     test_pipeline = Pipeline("Test", "000001", p_module.Platform.AWS, False)
 
-    test_pipeline.add_pipeline_methods("method_c", "tests.test_methods.sd.small_data",
+    test_pipeline.add_pipeline_methods("run_id", "method_c", "tests.test_methods.sd.small_data",
                                        [{"name": "df", "database": "test_db", "table": "test_table",
                                          "path": "dummy.json",
                                          "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                         "condition": "=",
                                                                                         "value": 100}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       {
+                                           "location": "s3://dtrades-assets/workflows",
+                                           "format": "parquet",
+                                           "save_mode": "append",
+                                           "partition_by": ["run_id"]
+                                       }, True,
                                        {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_pipeline.add_pipeline_methods("method_d", "tests.test_methods.sd.small_data",
+    test_pipeline.add_pipeline_methods("run_id", "method_d", "tests.test_methods.sd.small_data",
                                        [{"name": "df_1", "path": "dummy.json", "database": "test_db_1",
                                          "table": "test_table_1",
                                          "select": ["column_1", "column_2"],
@@ -98,7 +114,12 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                          "table": "test_table_2",
                                          "select": ["column_1", "column_2"],
                                          "where": [{"column": "column_2", "condition": "<", "value": 500}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       {
+                                           "location": "s3://dtrades-assets/workflows",
+                                           "format": "parquet",
+                                           "save_mode": "append",
+                                           "partition_by": ["run_id"]
+                                       }, True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(p_module.Platform.AWS)
@@ -140,16 +161,21 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
 
     test_pipeline = Pipeline("Test", "000001", p_module.Platform.AWS, True)
 
-    test_pipeline.add_pipeline_methods("method_a", "tests.test_methods.bd.big_data",
+    test_pipeline.add_pipeline_methods("run_id", "method_a", "tests.test_methods.bd.big_data",
                                        [{"name": "df", "database": "test_db", "table": "test_table",
                                          "path": "dummy.json",
                                          "select": ["column_1", "column_2"], "where": [{"column": "column_1",
                                                                                         "condition": "=",
                                                                                         "value": 100}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       {
+                                           "location": "s3://dtrades-assets/workflows",
+                                           "format": "parquet",
+                                           "save_mode": "append",
+                                           "partition_by": ["run_id"]
+                                       }, True,
                                        {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
-    test_pipeline.add_pipeline_methods("method_b", "tests.test_methods.bd.big_data",
+    test_pipeline.add_pipeline_methods("run_id", "method_b", "tests.test_methods.bd.big_data",
                                        [{"name": "df_1", "path": "dummy.json", "database": "test_db_1",
                                          "table": "test_table_1",
                                          "select": ["column_1", "column_2"],
@@ -158,7 +184,12 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                          "table": "test_table_2",
                                          "select": ["column_1", "column_2"],
                                          "where": [{"column": "column_2", "condition": "<", "value": 500}]}],
-                                       "s3://dtrades-assets/workflows",
+                                       {
+                                           "location": "s3://dtrades-assets/workflows",
+                                           "format": "parquet",
+                                           "save_mode": "append",
+                                           "partition_by": ["run_id"]
+                                       }, True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
     test_pipeline.run(p_module.Platform.AWS)

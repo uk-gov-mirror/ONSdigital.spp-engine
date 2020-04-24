@@ -1,6 +1,6 @@
 import os
 import json
-from spp.engine.messaging import is_valid_json, write_queue
+from aws.messaging import is_valid_json, write_queue
 from spp.utils.logging import Logger
 
 
@@ -24,12 +24,12 @@ def handler(event, context=None):
     queue = os.environ['QUEUE']
     schema = json.loads(os.environ['SCHEMA'])
     imp_module = __import__(os.environ['IMP_MODULE'])
-    imp_function = getattr(imp_module, os.environ['IMP_METHOD'])
+    imp_instance = getattr(imp_module, os.environ['IMP_CLASS'])()
 
     # Check JSON schema against expected shape
     if not is_valid_json(event, schema):
         return {"Exception": "Message not sent", "Reason": "JSON validation failed"}
     
     # Send message to SQS
-    response = write_queue(imp_function, queue, event)
+    response = write_queue(queue, event, imp_instance)
     return response
