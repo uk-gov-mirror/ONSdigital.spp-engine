@@ -2,3 +2,6 @@
 .idea/
 *.pyc
 tmp/
+build/*
+dist/*
+spp_engine.egg*
