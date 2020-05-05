@@ -31,9 +31,9 @@ class PandasAthenaReader(PandasReader):
         :param query: Query instance
         :returns Pandas DataFrame:
         """
-        import awswrangler
-        session = awswrangler.Session()
-        return session.pandas.read_sql_athena(sql=str(query)[:-1], database=query.database, **kwargs)
+        import awswrangler as wr
+
+        return wr.athena.read_sql_query(sql=str(query)[:-1], database=query.database, **kwargs)
 
     def __repr__(self):
         return 'PandasAthenaReader'
