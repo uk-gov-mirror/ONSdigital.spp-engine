@@ -16,10 +16,10 @@ from pyspark.sql.types import StructField, StructType, StringType, IntegerType, 
 import pandas as pd
 import spp.engine.pipeline as p_module
 
-
+@patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
 @patch('spp.engine.pipeline.DataAccess')
-def test_aws_small_method(mock_class, mock_method):
+def test_aws_small_method(mock_class, mock_method, mock_crawl):
     mock_method.return_value("Data has been written out")
     mock_class.return_value.name = "df"
     mock_class().pipeline_read_data.return_value = pd.DataFrame({"old_col": pd.Series([2])})
@@ -38,12 +38,12 @@ def test_aws_small_method(mock_class, mock_method):
                                  True,
                                  {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_method.run(p_module.Platform.AWS, None)
+    test_method.run(p_module.Platform.AWS, "test_crawler")
 
-
+@patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
 @patch('spp.engine.pipeline.DataAccess')
-def test_aws_big_method(mock_class, mock_method, create_session):
+def test_aws_big_method(mock_class, mock_method, crawl, create_session):
     mock_method.return_value("Data has been written out")
     mock_class.return_value.name = "df"
 
@@ -70,12 +70,12 @@ def test_aws_big_method(mock_class, mock_method, create_session):
                                  }, True,
                                  {"param_1": "col_1", "param_2": "col_2", "param_3": "col_3"})
 
-    test_method.run(p_module.Platform.AWS, create_session)
+    test_method.run(p_module.Platform.AWS, "test-crawler", True)
 
-
+@patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
 @patch('spp.engine.pipeline.DataAccess')
-def test_aws_small_pipeline(mock_class, mock_method):
+def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
     df_names = ["df", "df_1", "df_2"]
     dfs = [pd.DataFrame({"old_col": pd.Series([1])}),
            pd.DataFrame({"reporting_date": pd.Series(["201602", "201603", "201604"]), "entity_name": pd.Series([
@@ -122,12 +122,12 @@ def test_aws_small_pipeline(mock_class, mock_method):
                                        }, True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(p_module.Platform.AWS)
+    test_pipeline.run(p_module.Platform.AWS, "test-crawler")
 
-
+@patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
 @patch('spp.engine.pipeline.DataAccess')
-def test_aws_big_pipeline(mock_class, mock_method, create_session):
+def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
     df_names = ["df", "df_1", "df_2"]
 
     schema = StructType([
@@ -192,4 +192,4 @@ def test_aws_big_pipeline(mock_class, mock_method, create_session):
                                        }, True,
                                        {"param_1": "reporting_date", "param_2": "entity_name"})
 
-    test_pipeline.run(p_module.Platform.AWS)
+    test_pipeline.run(platform=p_module.Platform.AWS, crawler_name="test-crawler")

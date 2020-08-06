@@ -39,7 +39,7 @@ class Query:
                 # currently config(json) string escape not working as expected in lamda/stepfunction. This a work around
                 if whr["column"] == 'run_id':
                     whr["value"] = "'" + whr["value"] + "'"
-                clause_list.append("{}{}{}".format(whr["column"], whr["condition"], str(whr["value"])))
+                clause_list.append("{} {} {}".format(whr["column"], whr["condition"], str(whr["value"])))
                 condition_str = " AND ".join(clause_list).rstrip(" AND ")
             return condition_str
 

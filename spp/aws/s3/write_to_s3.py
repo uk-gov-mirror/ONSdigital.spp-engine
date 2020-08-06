@@ -23,7 +23,6 @@ def write_sparkDf_to_s3(df, data_target):
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
     from awsglue.dynamicframe import DynamicFrame
-    # df.show(1)
     glueContext = GlueContext(SparkContext.getOrCreate())
     LOG.info('Inside write_sparkDf_to_s3 :: Created glueContext ... ')
     dynamic_df_out = DynamicFrame.fromDF(df, glueContext, "dynamic_df_out")
