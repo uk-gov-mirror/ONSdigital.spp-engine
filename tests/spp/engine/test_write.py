@@ -4,7 +4,7 @@ import os
 import shutil
 from unittest.mock import patch
 
-suite_location = './tests/tmp'
+suite_location = '/tmp'
 
 @patch('spp.engine.write.write_sparkDf_to_s3')
 def test_spark_write_csv(write_to_s3, create_session):
