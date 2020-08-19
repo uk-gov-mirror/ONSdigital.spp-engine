@@ -23,6 +23,6 @@ ENV SPARK_HOME=/opt/workspace/spark-2.4.6-bin-hadoop2.7
 ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.10.7-src.zip:$PYTHONPATH
 ENV PATH=$SPARK_HOME/bin:$SPARK_HOME/python:$PATH
 VOLUME /opt/workspace
-USER dockeruser
+#USER dockeruser
 WORKDIR /usr/src/app
 
