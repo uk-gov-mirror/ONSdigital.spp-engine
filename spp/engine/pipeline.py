@@ -117,9 +117,6 @@ class PipelineMethod:
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
                     for count, output in enumerate(outputs, start=1):
                         # (output, data_target, platform, spark=None,counter=None):
-                        # Note MC - If this bit of code runs, it will error
-                        # Because output doesnt exist yet.
-                        # Need to check what it should be doing.
                         output = isPartitionColumnExists(output,
                                                          self.data_target[
                                                              'partition_by'],
