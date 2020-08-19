@@ -64,8 +64,6 @@ def _message_log(queue_resource, writer):
 
 def write_queue(vendor_implementation, queue_resource, event):
     """
-    NOTE MC: This and the above are both called write_queue.
-             Need to work out which should be
     Calls a given implementation to write to a message queue.
     Exceptions are logged, but not raised.
     :param vendor_implementation: Function that implements queue write

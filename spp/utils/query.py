@@ -8,7 +8,7 @@ class Query:
 
     def __init__(self, database, table, select=None, where=None):
         """ Constructor for the Query class takes
-            database and table optional for select whcih can be string or list
+            database and table optional for select which can be string or list
             Optional where expects a map of format
             {"column_name": {"condition": value, "value": value}}
         """
