@@ -7,7 +7,7 @@ volumes:
 
 services:
   python:
-    image: ecr-image-spp-engine
+    image: ../ecr-image-spp-engine/image.tar
     volumes:
       - shared-workspace:/opt/workspace
       - .:/usr/src/app
@@ -20,7 +20,7 @@ services:
     command: pytest
   spark:
     container_name: spark
-    image: ecr-image-spark
+    image: ../ecr-image-spark/image.tar
     volumes:
       - shared-workspace:/opt/workspace
       - .:/usr/src/app
