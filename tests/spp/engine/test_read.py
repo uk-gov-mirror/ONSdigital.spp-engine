@@ -8,17 +8,20 @@ from unittest.mock import patch
 def test_spark_read_db(create_session):
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
     df.createOrReplaceGlobalTempView('view')
-    assert read.spark_read(create_session, Query('global_temp', 'view', '*')).collect() == df.collect()
+    assert read.spark_read(
+        create_session, Query('global_temp', 'view', '*')).collect() == df.collect()
 
 
 def test_spark_read_csv(create_session):
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
-    assert read.spark_read(create_session, './tests/resources/data/dummy.csv').collect() == df.collect()
+    assert read.spark_read(
+        create_session, './tests/resources/data/dummy.csv').collect() == df.collect()
 
 
 def test_spark_read_json(create_session):
     df = create_session.read.json('./tests/resources/data/dummy.json')
-    assert read.spark_read(create_session, './tests/resources/data/dummy.json').collect() == df.collect()
+    assert read.spark_read(
+        create_session, './tests/resources/data/dummy.json').collect() == df.collect()
 
 
 @patch('spp.engine.read.PandasAthenaReader.read_db')
@@ -27,7 +30,11 @@ def test_pandas_read_db(mock_instance_method):
     df = pd.read_csv('./tests/resources/data/dummy.csv')
     from spp.engine.read import PandasAthenaReader
     assert_frame_equal(
-        read.pandas_read(Query('FAKEDB', 'FAKETABLE', ['col1', 'col2'], 'col1 = 1'), PandasAthenaReader()), df)
+        read.pandas_read(Query('FAKEDB',
+                               'FAKETABLE',
+                               ['col1', 'col2'],
+                               'col1 = 1'),
+                         PandasAthenaReader()), df)
 
 
 def test_pandas_read_db_not_implemented():
@@ -35,7 +42,12 @@ def test_pandas_read_db_not_implemented():
     from spp.utils.query import Query
     raised = False
     try:
-        read.pandas_read(Query('FAKEDB', 'FAKETABLE', ['col1', 'col2'], 'col1 = 1'), PandasReader())
+        read.pandas_read(
+            Query('FAKEDB',
+                  'FAKETABLE',
+                  ['col1', 'col2'],
+                  'col1 = 1'),
+            PandasReader())
     except NotImplementedError:
         raised = True
     finally:
@@ -49,4 +61,5 @@ def test_pandas_read_csv():
 
 def test_pandas_read_json():
     df = pd.read_json('./tests/resources/data/dummy.json', lines=True)
-    assert_frame_equal(read.pandas_read('./tests/resources/data/dummy.json', lines=True), df)
+    assert_frame_equal(
+        read.pandas_read('./tests/resources/data/dummy.json', lines=True), df)

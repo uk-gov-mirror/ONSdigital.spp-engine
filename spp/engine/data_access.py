@@ -9,7 +9,8 @@ LOG = Logger(__name__).get()
 
 class DataAccess:
     """
-    Wrapper that calls the differing Data Access methods depending on the platform that the pipeline is running on and
+    Wrapper that calls the differing Data Access methods depending on
+    the platform that the pipeline is running on and
     whether it is utilising Apache Spark or is a pure python project
     """
 
@@ -29,7 +30,8 @@ class DataAccess:
 
     def pipeline_read_data(self, platform, spark=None):
         """
-        Will call the specific data retrieval method depending on the Platform and whether it is spark or not
+        Will call the specific data retrieval method depending
+        on the Platform and whether it is spark or not
         using the query supplies when instantiation the class.
         :param platform: Platform
         :param spark: SparkSession
@@ -42,7 +44,8 @@ class DataAccess:
             LOG.info("DataAccess: read data into spark dataframe")
             return spark_read(spark=spark, cursor=self.query)
         else:
-            if (platform == spp.engine.pipeline.Platform.AWS.value) & (isinstance(self.query, Query)):
+            if (platform == spp.engine.pipeline.Platform.AWS.value) & \
+                    (isinstance(self.query, Query)):
                 LOG.info("DataAccess: read data into pandas dataframe")
                 return pandas_read(cursor=self.query, reader=PandasAthenaReader())
             else:
@@ -52,7 +55,8 @@ class DataAccess:
 
 def write_data(output, data_target, platform, spark=None, counter=0):
     """
-    This method may be removed as further requirements determine whether this should be a generic function
+    This method may be removed as further requirements
+    determine whether this should be a generic function
     :param output: Dataframe
     :param data_target: target location
     :param platform: Platform
@@ -77,7 +81,7 @@ def isPartitionColumnExists(df, list_partition_column, run_id, is_spark):
     if (df is not None) and (list_partition_column is not None) and is_spark:
         import pyspark.sql.functions as f
         columns = df.columns
-        if not 'run_id' in columns:
+        if 'run_id' not in columns:
             LOG.info('inside spark run_id not exist')
             df = df.withColumn('run_id', f.lit(run_id))
         elif 'run_id' in columns:
@@ -85,7 +89,7 @@ def isPartitionColumnExists(df, list_partition_column, run_id, is_spark):
             df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
     elif (df is not None) and (list_partition_column is not None) and not is_spark:
         columns = list(df.columns)
-        if not 'run_id' in columns:
+        if 'run_id' not in columns:
             LOG.info('inside pandas run_id not exist')
             df['run_id'] = run_id
         elif 'run_id' in columns:

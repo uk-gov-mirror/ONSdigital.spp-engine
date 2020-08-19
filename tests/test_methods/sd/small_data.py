@@ -1,5 +1,3 @@
-import pandas as pd
-
 
 def method_c(df, param_1, param_2, param_3):
     df[param_1] = 0

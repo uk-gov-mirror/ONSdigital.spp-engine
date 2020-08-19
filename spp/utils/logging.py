@@ -10,7 +10,8 @@ class Logger(object):
     def __init__(self, name):
         logger = logging.getLogger("uk.gov.ons.%s" % name)
         logger.setLevel(os.getenv('LOGGING_LEVEL', logging.INFO))
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                      '%(levelname)s - %(message)s')
 
         stdout_handler = logging.StreamHandler(sys.stdout)
         stdout_handler.setFormatter(formatter)

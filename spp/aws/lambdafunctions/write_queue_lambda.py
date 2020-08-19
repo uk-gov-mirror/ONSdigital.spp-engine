@@ -15,11 +15,12 @@ def handler(event, context=None):
     :param context: Context dictionary
     :key QUEUE: Env-var with link to queue resource
     :key SCHEMA: Env-var with JSON format string with schema definition
-    :key IMP_MODULE: Env-var with dot-delimited path to module of message queue write implementation
+    :key IMP_MODULE: Env-var with dot-delimited path to module
+                     of message queue write implementation
     :key IMP_METHOD: Env-var with name of implementing method
     :returns response: Dictionary with queue response or error message
     """
-    
+
     # Get environment objects
     queue = os.environ['QUEUE']
     schema = json.loads(os.environ['SCHEMA'])
@@ -29,7 +30,7 @@ def handler(event, context=None):
     # Check JSON schema against expected shape
     if not is_valid_json(event, schema):
         return {"Exception": "Message not sent", "Reason": "JSON validation failed"}
-    
+
     # Send message to SQS
     response = write_queue(queue, event, imp_instance)
     return response
