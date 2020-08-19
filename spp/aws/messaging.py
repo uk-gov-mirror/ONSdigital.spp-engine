@@ -31,30 +31,6 @@ class SQSQueueWriter(QueueWriter):
                                    MessageBody=json.dumps(event), **kwargs)
 
 
-def write_queue_possibly_old(queue_resource, event, writer=QueueWriter(), **kwargs):
-    """
-    Writes a message to a queue. A QueueWriter instance must be supplied
-    which implements send_message().
-    :param queue_resource: String link to queue
-    :param event: JSON message
-    :param writer: connection object that extends QueueWriter
-    :param kwargs: Other keyword arguments to pass to implementing method
-    :return:
-    """
-    _message_log(queue_resource, writer)
-    try:
-        response = writer.send_message(queue_resource, event, **kwargs)
-    except NotImplementedError:
-        LOG.exception("send_message method in writer instance not implemented.")
-        raise
-    except Exception as ex:
-        LOG.exception("Exception during message send")
-        return {"Exception": "Message not sent", "Reason": str(ex)}
-    else:
-        LOG.info(f"Response: {response}")
-        return response
-
-
 def is_valid_json(instance, schema):
     """
     Calls the jsonschema library to test an instance of JSON
