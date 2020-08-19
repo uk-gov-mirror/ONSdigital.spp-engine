@@ -29,4 +29,3 @@ services:
       SPARK_HOME: /opt/workspace/spark-2.4.6-bin-hadoop2.7
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET}
-
