@@ -1,9 +1,10 @@
 from spp.engine.write import spark_write, pandas_write
 import pandas as pd
 import os
+import tempfile
 from unittest.mock import patch
 
-suite_location = '/tmp'
+suite_location = str(tempfile.gettempdir())
 
 
 @patch('spp.engine.write.write_sparkDf_to_s3')
@@ -19,7 +20,7 @@ def test_spark_write_csv(write_to_s3, create_session):
 
     spark_write(df, test_target, counter=0)
     assert write_to_s3.call_args[0][1]['location'] == \
-           "/tmp/test_spark_write_file.csv"
+           suite_location + "/test_spark_write_file.csv"
 
 
 @patch('spp.engine.write.write_sparkDf_to_s3')
@@ -35,7 +36,7 @@ def test_spark_write_json(write_to_s3, create_session):
 
     spark_write(df, test_target, counter=0)
     assert write_to_s3.call_args[0][1]['location'] == \
-           "/tmp/test_spark_write_file.json"
+        suite_location + "/test_spark_write_file.json"
 
 
 @patch('spp.engine.write.write_sparkDf_to_s3')
@@ -51,7 +52,7 @@ def test_spark_write_file_with_partitions(write_to_s3, create_session):
 
     spark_write(df, test_target, counter=0, partitions=['_c0'])
     assert write_to_s3.call_args[0][1]['location'] == \
-           "/tmp/test_spark_write_file_with_partitions.csv"
+        suite_location + "/test_spark_write_file_with_partitions.csv"
 
 
 @patch('spp.engine.write.write_pandasDf_to_s3')
@@ -70,4 +71,4 @@ def test_pandas_write_parquet(write_to_s3):
 
     pandas_write(df, test_target, counter=0)
     assert write_to_s3.call_args[0][1]['location'] == \
-           "/tmp/test_pandas_write_file.parquet"
+        suite_location + "/test_pandas_write_file.parquet"
