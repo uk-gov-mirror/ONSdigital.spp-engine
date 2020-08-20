@@ -33,7 +33,8 @@ def pandas_write(df, data_target, **kwargs):
     # _write_log(location)
     # import s3fs  # Leave this in to check optional dependency explicitly
     # return getattr(df, "to_{}".format(_get_file_format(location)))(location, **kwargs)
-    write_pandasDf_to_s3(df,data_target)
+    write_pandasDf_to_s3(df, data_target)
+
 
 def _get_file_format(location):
     # ToDo
@@ -43,5 +44,5 @@ def _get_file_format(location):
 
 
 def _write_log(location):
-    logger.info(f"Writing to file")
+    logger.info("Writing to file")
     logger.info(f"Location: {location}")

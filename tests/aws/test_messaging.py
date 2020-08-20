@@ -1,4 +1,4 @@
-from aws.messaging import is_valid_json, write_queue
+from spp.aws.messaging import is_valid_json, write_queue
 
 
 valid_schema = {
@@ -119,4 +119,5 @@ def test_write_queue_exception_raised():
         raise Exception("broken implementation")
 
     response = write_queue(implementation, resource, event)
-    assert response == {'Exception': 'Message not sent', 'Reason': 'broken implementation'}
+    assert response == {'Exception': 'Message not sent',
+                        'Reason': 'broken implementation'}
