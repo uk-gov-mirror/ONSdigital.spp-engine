@@ -1,3 +1,8 @@
+from spp.utils.logging import Logger
+
+LOG = Logger(__name__).get()
+
+
 class Query:
     """ Class to create a SQL Query string from the input parameters. """
     database = ''
@@ -5,8 +10,9 @@ class Query:
     select = None
     where = None
     query = ''
+    run_id = None
 
-    def __init__(self, database, table, select=None, where=None):
+    def __init__(self, database, table, select=None, where=None, run_id=None):
         """ Constructor for the Query class takes
             database and table optional for select which can be string or list
             Optional where expects a map of format
@@ -16,6 +22,7 @@ class Query:
         self.table = table
         self.select = select
         self.where = where
+        self.run_id = run_id
         self._formulate_query(self.database, self.table, self.select, self.where)
 
     def __str__(self):
@@ -38,13 +45,20 @@ class Query:
                 and len(where_conds) > 0:
             clause_list = []
             condition_str = ''
+
             for whr in where_conds:
                 # Todo remove handle it on lambda itself.
                 # currently config(json) string escape not
                 # working as expected in lamda/stepfunction.
-                # This a work around
+                # This is a work around
                 if whr["column"] == 'run_id':
+                    # Replace word 'previous' with
+                    # a run_id which got generated in steprunner lambda
+                    if whr["value"] == 'previous':
+                        whr["value"] = self.run_id
                     whr["value"] = "'" + whr["value"] + "'"
+                LOG.info("Inside spp_engine :: query :: handle_where :  ")
+                LOG.info(str(where_conds))
                 clause_list.append("{} {} {}".format(whr["column"],
                                                      whr["condition"],
                                                      str(whr["value"])))
@@ -61,4 +75,6 @@ class Query:
         where_clause = self._handle_where(where)
         if where_clause is not None:
             tmp += " WHERE {}".format(where_clause)
+        LOG.info("Inside spp_engine :: query :: _formulate_query :  ")
+        LOG.info(tmp)
         self.query = tmp + ";"
