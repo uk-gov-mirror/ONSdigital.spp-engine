@@ -28,14 +28,14 @@ def test_aws_small_method(mock_class, mock_method, mock_crawl):
         pipeline_read_data.\
         return_value = pd.DataFrame({"old_col": pd.Series([2])})
 
-    test_method = PipelineMethod("run_id", "method_c",
+    test_method = PipelineMethod("RSI_20200520_15141987", "method_c",
                                  "tests.test_methods.sd.small_data",
                                  [{"name": "df", "database": "test_db",
                                    "table": "test_table",
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"],
-                                   "where": [{"column": "column_1",
-                                              "condition": "=", "value": 100}]}],
+                                   "where": [{"column": "run_id",
+                                              "condition": "=", "value": "previous"}]}],
                                  {
                                      "location": "s3://dtrades-assets/workflows",
                                      "format": "parquet",
@@ -65,14 +65,14 @@ def test_aws_big_method(mock_class, mock_method, crawl, create_session):
     sdf = create_session.createDataFrame(data, schema)
 
     mock_class().pipeline_read_data.return_value = sdf
-    test_method = PipelineMethod("run_id", "method_a",
+    test_method = PipelineMethod("RSI_20200520_15141987", "method_a",
                                  "tests.test_methods.bd.big_data",
                                  [{"name": "df", "database": "test_db",
                                    "table": "test_table",
                                    "path": "dummy.json",
                                    "select": ["column_1", "column_2"],
-                                   "where": [{"column": "column_1",
-                                              "condition": "=", "value": 100}]}],
+                                   "where": [{"column": "run_id",
+                                              "condition": "=", "value": "previous"}]}],
                                  {
                                      "location": "s3://dtrades-assets/workflows",
                                      "format": "parquet",
@@ -107,15 +107,15 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
 
     test_pipeline = Pipeline("Test", "000001", p_module.Platform.AWS, False)
 
-    test_pipeline.add_pipeline_methods("run_id", "method_c",
+    test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_c",
                                        "tests.test_methods.sd.small_data",
                                        [{"name": "df", "database": "test_db",
                                          "table": "test_table",
                                          "path": "dummy.json",
                                          "select": ["column_1", "column_2"],
-                                         "where": [{"column": "column_1",
+                                         "where": [{"column": "run_id",
                                                     "condition": "=",
-                                                    "value": 100}]}],
+                                                    "value": "previous"}]}],
                                        {
                                            "location": "s3://dtrades-assets/workflows",
                                            "format": "parquet",
@@ -124,20 +124,20 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
                                        }, True,
                                        {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_pipeline.add_pipeline_methods("run_id", "method_d",
+    test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_d",
                                        "tests.test_methods.sd.small_data",
                                        [{"name": "df_1", "path": "dummy.json",
                                          "database": "test_db_1",
                                          "table": "test_table_1",
                                          "select": ["column_1", "column_2"],
-                                         "where": [{"column": "column_1",
-                                                    "condition": "=", "value": 100}]},
+                                         "where": [{"column": "run_id",
+                                                    "condition": "=", "value": "RSI_20200418_12121586"}]},
                                         {"name": "df_2", "path": "dummy2.json",
                                          "database": "test_db_2",
                                          "table": "test_table_2",
                                          "select": ["column_1", "column_2"],
-                                         "where": [{"column": "column_2",
-                                                    "condition": "<", "value": 500}]}],
+                                         "where": [{"column": "column_1",
+                                                    "condition": "<", "value": 202020}]}],
                                        {
                                            "location": "s3://dtrades-assets/workflows",
                                            "format": "parquet",

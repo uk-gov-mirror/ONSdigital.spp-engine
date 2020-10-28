@@ -59,7 +59,7 @@ class PipelineMethod:
                 tmp_sql = Query(database=da['database'],
                                 table=da['table'],
                                 select=da['select'],
-                                where=da['where'])
+                                where=da['where'],run_id=self.run_id)
             tmp_path = da['path']
             da_value.append({'sql': tmp_sql, 'path': tmp_path})
         data_source_tmp = dict(zip(da_key, da_value))
