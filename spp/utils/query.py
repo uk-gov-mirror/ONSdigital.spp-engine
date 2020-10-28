@@ -2,6 +2,7 @@ from spp.utils.logging import Logger
 
 LOG = Logger(__name__).get()
 
+
 class Query:
     """ Class to create a SQL Query string from the input parameters. """
     database = ''
@@ -51,7 +52,8 @@ class Query:
                 # working as expected in lamda/stepfunction.
                 # This is a work around
                 if whr["column"] == 'run_id':
-                    # Replace word 'previous' with a run_id which is generated in steprunner lambda
+                    # Replace word 'previous' with
+                    # a run_id which got generated in steprunner lambda
                     if whr["value"] == 'previous':
                         whr["value"] = self.run_id
                     whr["value"] = "'" + whr["value"] + "'"
