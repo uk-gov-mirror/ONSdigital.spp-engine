@@ -1,57 +1,74 @@
 from spp.engine.write import spark_write, pandas_write
 import pandas as pd
 import os
-import shutil
+import tempfile
+from unittest.mock import patch
+
+suite_location = str(tempfile.gettempdir())
 
 
-suite_location = './tests/tmp'
-
-
-def test_spark_write_csv(create_session):
-
+@patch('spp.engine.write.write_sparkDf_to_s3')
+def test_spark_write_csv(write_to_s3, create_session):
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file.csv"
+    test_target = {
+        "location": test_location,
+        "format": "csv",
+        "save_mode": "append",
+        "partition_by": ["_c0"]
+    }
 
-    try:
-        spark_write(df, test_location)
-        assert os.path.exists(test_location)
-    finally:
-        shutil.rmtree(suite_location)
+    spark_write(df, test_target, counter=0)
+    assert write_to_s3.call_args[0][1]['location'] == \
+           suite_location + "/test_spark_write_file.csv"
 
 
-def test_spark_write_json(create_session):
-
+@patch('spp.engine.write.write_sparkDf_to_s3')
+def test_spark_write_json(write_to_s3, create_session):
     df = create_session.read.json('./tests/resources/data/dummy.json')
     test_location = f"{suite_location}/test_spark_write_file.json"
+    test_target = {
+        "location": test_location,
+        "format": "json",
+        "save_mode": "append",
+        "partition_by": ["a"]
+    }
 
-    try:
-        spark_write(df, test_location)
-        assert os.path.exists(test_location)
-    finally:
-        shutil.rmtree(suite_location)
+    spark_write(df, test_target, counter=0)
+    assert write_to_s3.call_args[0][1]['location'] == \
+        suite_location + "/test_spark_write_file.json"
 
 
-def test_spark_write_file_with_partitions(create_session):
-
+@patch('spp.engine.write.write_sparkDf_to_s3')
+def test_spark_write_file_with_partitions(write_to_s3, create_session):
     df = create_session.read.csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_spark_write_file_with_partitions.csv"
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["_c0"]
+    }
 
-    try:
-        spark_write(df, test_location, partitions=['_c0'])
-        assert os.path.exists(test_location)
-    finally:
-        shutil.rmtree(suite_location)
+    spark_write(df, test_target, counter=0, partitions=['_c0'])
+    assert write_to_s3.call_args[0][1]['location'] == \
+        suite_location + "/test_spark_write_file_with_partitions.csv"
 
 
-def test_pandas_write_parquet():
-
+@patch('spp.engine.write.write_pandasDf_to_s3')
+def test_pandas_write_parquet(write_to_s3):
     df = pd.read_csv('./tests/resources/data/dummy.csv')
     test_location = f"{suite_location}/test_pandas_write_file.parquet"
+    test_target = {
+        "location": test_location,
+        "format": "parquet",
+        "save_mode": "append",
+        "partition_by": ["c"]
+    }
 
-    try:
-        if not os.path.exists(suite_location):
-            os.mkdir(suite_location)
-        pandas_write(df, test_location)
-        assert os.path.exists(test_location)
-    finally:
-        shutil.rmtree(suite_location)
+    if not os.path.exists(suite_location):
+        os.mkdir(suite_location)
+
+    pandas_write(df, test_target, counter=0)
+    assert write_to_s3.call_args[0][1]['location'] == \
+        suite_location + "/test_pandas_write_file.parquet"
