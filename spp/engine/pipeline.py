@@ -206,7 +206,7 @@ class Pipeline:
         :param module_name: the name of the module to be reported - String
         :return:
         """
-        aws_functions.send_bpm_status(self.queue_url, message, module_name,
+        aws_functions.send_bpm_status(self.queue_url, status, module_name,
                                       self.run_id, survey='RSI')
 
     def run(self, platform, crawler_name):
