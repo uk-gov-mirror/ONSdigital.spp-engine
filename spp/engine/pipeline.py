@@ -153,13 +153,13 @@ class Pipeline:
     run_id = None
 
     def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False,
-                 queue_url=""):
+                 queue_url=None):
         """
         Initialises the attributes of the class.
         :param name:
         :param platform: Platform
         :param is_spark: Boolean
-        :param queue_url: String
+        :param queue_url: String or None if there is no queue to send status to
         """
         LOG.info("Initializing Pipeline")
         self.name = name
@@ -206,6 +206,9 @@ class Pipeline:
         :param module_name: the name of the module to be reported - String
         :return:
         """
+        if self.queue_url is None:
+            return
+
         aws_functions.send_bpm_status(self.queue_url, status, module_name,
                                       self.run_id, survey='RSI')
 
@@ -234,7 +237,7 @@ def construct_pipeline(config):
     pipeline = Pipeline(
         name=config['name'], run_id=config['run_id'],
         platform=config['platform'], is_spark=config['spark'],
-        queue_url=config['queue_url']
+        queue_url=config.get('queue_url')
     )
 
     for method in config['methods']:
