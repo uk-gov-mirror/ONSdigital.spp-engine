@@ -7,6 +7,8 @@ from spp.aws.glue_crawler import crawl
 
 from spp.utils.query import Query
 
+from es_aws_functions import aws_functions
+
 LOG = Logger(__name__).get()
 
 
@@ -150,12 +152,14 @@ class Pipeline:
     spark = None
     run_id = None
 
-    def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False):
+    def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False,
+                 queue_url=None):
         """
         Initialises the attributes of the class.
         :param name:
         :param platform: Platform
         :param is_spark: Boolean
+        :param queue_url: String or None if there is no queue to send status to
         """
         LOG.info("Initializing Pipeline")
         self.name = name
@@ -166,6 +170,7 @@ class Pipeline:
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
             # self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
+        self.queue_url = queue_url
         self.methods = []
 
     def add_pipeline_methods(self, run_id, name, module, data_source,
@@ -194,6 +199,19 @@ class Pipeline:
         self.methods.append(PipelineMethod(run_id, name, module,
                                            data_source, data_target, write, params))
 
+    def send_status(self, status, module_name):
+        """
+        Send a status message for the pipeline
+        :param status: The status to send - String
+        :param module_name: the name of the module to be reported - String
+        :return:
+        """
+        if self.queue_url is None:
+            return
+
+        aws_functions.send_bpm_status(self.queue_url, status, module_name,
+                                      self.run_id, survey='RSI')
+
     def run(self, platform, crawler_name):
         """
         Runs the methods of the pipeline
@@ -201,10 +219,15 @@ class Pipeline:
         :return:
         """
         LOG.info("Running Pipeline: {}".format(self.name))
+        self.send_status("IN PROGRESS", self.name)
         for method in self.methods:
             LOG.info("Running Method: {}".format(method.method_name))
+            self.send_status('IN PROGRESS', method.method_name)
             method.run(platform, crawler_name, self.spark)
+            self.send_status('DONE', method.method_name)
             LOG.info("Method Finished: {}".format(method.method_name))
+
+        self.send_status('DONE', self.name)
 
 
 def construct_pipeline(config):
@@ -213,7 +236,8 @@ def construct_pipeline(config):
     ))
     pipeline = Pipeline(
         name=config['name'], run_id=config['run_id'],
-        platform=config['platform'], is_spark=config['spark']
+        platform=config['platform'], is_spark=config['spark'],
+        queue_url=config.get('queue_url')
     )
 
     for method in config['methods']:
