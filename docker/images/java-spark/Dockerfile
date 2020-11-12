@@ -1,5 +1,6 @@
 FROM openjdk:8-jre-slim
 ARG huid=9999
+
 RUN apt-get update
 RUN apt-get install curl -y
 RUN mkdir -p /opt/workspace && \
@@ -10,7 +11,6 @@ tar -xzvC /opt/workspace/
 RUN useradd --shell /bin/bash -u $huid -o -c "" -m dockeruser
 
 # -- Runtime
-
 
 USER dockeruser
 WORKDIR /opt/workspace
