@@ -1,30 +1,38 @@
 ---
 version: "3.7"
-volumes:
-  shared-workspace:
-    name: "workspace"
-    driver: local
+
 services:
   python:
     build:
       dockerfile: docker/images/lambda-python/Dockerfile
       context: .
     volumes:
-      - shared-workspace:/opt/workspace
       - .:/usr/src/app
-    environment:
-      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
-      PYSPARK_PYTHON: python3
-      PYSPARK_SUBMIT_ARGS: "pyspark-shell"
+
   spark:
+
     build:
       dockerfile: docker/images/java-spark/Dockerfile
       context: .
     volumes:
-      - shared-workspace:/opt/workspace
       - .:/usr/src/app
     environment:
       JAVA_HOME: /usr/local/openjdk-8/bin/java
       SPARK_HOME: /opt/workspace/spark-2.4.6-bin-hadoop2.7
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET}
+
+  pyspark:
+    build:
+      dockerfile: docker/images/pyspark/Dockerfile
+      context: .
+    volumes:
+      - .:/usr/src/app
+    environment:
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+      PYSPARK_PYTHON: python3
+      PYSPARK_SUBMIT_ARGS: "pyspark-shell"
+      SPARK_HOME: /opt/workspace/spark-2.4.6-bin-hadoop2.7
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET}
+
