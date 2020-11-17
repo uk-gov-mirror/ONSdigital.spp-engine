@@ -209,7 +209,7 @@ class Pipeline:
         if self.queue_url is None:
             return
 
-        aws_functions.send_bpm_status(self.queue_url, status, module_name,
+        aws_functions.send_bpm_status(self.queue_url, module_name, status,
                                       self.run_id, survey='RSI')
 
     def run(self, platform, crawler_name):
