@@ -199,18 +199,20 @@ class Pipeline:
         self.methods.append(PipelineMethod(run_id, name, module,
                                            data_source, data_target, write, params))
 
-    def send_status(self, status, module_name):
+    def send_status(self, status, module_name, current_step_num=None):
         """
         Send a status message for the pipeline
         :param status: The status to send - String
         :param module_name: the name of the module to be reported - String
+        :param current_step_num: the number of the step in the pipeline - Int or None
         :return:
         """
         if self.bpm_queue_url is None:
             return
 
         aws_functions.send_bpm_status(self.queue_url, module_name, status,
-                                      self.run_id, survey='RSI')
+                                      self.run_id, survey='RSI', current_step_num=current_step_num,
+                                      total_steps=len(self.methods))
 
     def run(self, platform, crawler_name):
         """
@@ -220,11 +222,14 @@ class Pipeline:
         """
         LOG.info("Running Pipeline: {}".format(self.name))
         self.send_status("IN PROGRESS", self.name)
-        for method in self.methods:
+        for method_num, method in enumerate(self.methods):
             LOG.info("Running Method: {}".format(method.method_name))
-            self.send_status('IN PROGRESS', method.method_name)
+            # method_num is 0-indexed but we probably want step numbers
+            # to be 1-indexed
+            step_num = method_num+1
+            self.send_status('IN PROGRESS', method.method_name, current_step_num=step_num)
             method.run(platform, crawler_name, self.spark)
-            self.send_status('DONE', method.method_name)
+            self.send_status('DONE', method.method_name, current_step_num=step_num)
             LOG.info("Method Finished: {}".format(method.method_name))
 
         self.send_status('DONE', self.name)
