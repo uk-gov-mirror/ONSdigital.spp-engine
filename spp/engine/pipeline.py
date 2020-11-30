@@ -210,8 +210,9 @@ class Pipeline:
         if self.bpm_queue_url is None:
             return
 
-        aws_functions.send_bpm_status(self.queue_url, module_name, status,
-                                      self.run_id, survey='RSI', current_step_num=current_step_num,
+        aws_functions.send_bpm_status(self.bpm_queue_url, module_name, status,
+                                      self.run_id, survey='RSI',
+                                      current_step_num=current_step_num,
                                       total_steps=len(self.methods))
 
     def run(self, platform, crawler_name):
