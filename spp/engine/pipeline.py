@@ -170,7 +170,7 @@ class Pipeline:
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
             # self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
-        self.bpm_queue_url = queue_url
+        self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
     def add_pipeline_methods(self, run_id, name, module, data_source,
