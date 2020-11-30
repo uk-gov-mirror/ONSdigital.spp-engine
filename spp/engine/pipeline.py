@@ -237,7 +237,7 @@ def construct_pipeline(config):
     pipeline = Pipeline(
         name=config['name'], run_id=config['run_id'],
         platform=config['platform'], is_spark=config['spark'],
-        queue_url=config.get('queue_url')
+        bpm_queue_url=config.get('bpm_queue_url')
     )
 
     for method in config['methods']:
