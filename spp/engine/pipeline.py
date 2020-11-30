@@ -153,13 +153,13 @@ class Pipeline:
     run_id = None
 
     def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False,
-                 queue_url=None):
+                 bpm_queue_url=None):
         """
         Initialises the attributes of the class.
         :param name:
         :param platform: Platform
         :param is_spark: Boolean
-        :param queue_url: String or None if there is no queue to send status to
+        :param bpm_queue_url: String or None if there is no queue to send status to
         """
         LOG.info("Initializing Pipeline")
         self.name = name
@@ -170,7 +170,7 @@ class Pipeline:
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
             # self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
-        self.queue_url = queue_url
+        self.bpm_queue_url = queue_url
         self.methods = []
 
     def add_pipeline_methods(self, run_id, name, module, data_source,
@@ -206,7 +206,7 @@ class Pipeline:
         :param module_name: the name of the module to be reported - String
         :return:
         """
-        if self.queue_url is None:
+        if self.bpm_queue_url is None:
             return
 
         aws_functions.send_bpm_status(self.queue_url, status, module_name,
