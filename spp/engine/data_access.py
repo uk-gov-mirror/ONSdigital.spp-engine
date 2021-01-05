@@ -21,8 +21,11 @@ class DataAccess:
                  environment, run_id):
         """
         Takes in the Query object that is used to access the data
+        :param environment: Current running environment to pass to spp logger
         :param name: String
         :param query: spp.utils.query.Query
+        :param run_id: Current run_id to pass to spp logger
+        :param survey: Current running survey to pass to spp logger
         :return:
         """
         self.environment = environment
@@ -71,13 +74,13 @@ def write_data(output, data_target, platform,
     """
     This method may be removed as further requirements
     determine whether this should be a generic function
-    :param output: Dataframe
     :param data_target: target location
-    :param platform: Platform
     :param environment: Environment name for logger
+    :param output: Dataframe
+    :param platform: Platform
     :param run_id: Run_id name for logger
-    :param survey: Survey name for logger
     :param spark: SparkSession
+    :param survey: Survey name for logger
     :return:
     """
     try:
