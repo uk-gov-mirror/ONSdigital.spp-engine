@@ -16,10 +16,10 @@ args = getResolvedOptions(sys.argv, ['config', 'crawler-name'])
 config_parameters_string = (args['config']).replace("'", '"').\
                                replace("True", "true").replace("False", "false")+'}}'
 config = json.loads(config_parameters_string)['pipeline']
-survey = config_parameters_string['survey']
-run_id = config['run_id']
-environment = config['environment']
 crawler = args['crawler_name']
+environment = config['environment']
+run_id = config['run_id']
+survey = config_parameters_string['survey']
 
 try:
     logger = general_functions.get_logger(survey, current_module,
