@@ -14,8 +14,8 @@ class PandasReader:
         """
         Reads a file from a file path into a Pandas DataFrame.
         Selects the Pandas read method from the file extension.
-        :param path: String representing file path
         :param kwargs: Other keyword arguments to pass to pd.read{format}()
+        :param path: String representing file path
         :returns Pandas DataFrame:
         """
         return getattr(importlib.import_module('pandas'),
@@ -49,11 +49,11 @@ def pandas_read(cursor, environment, run_id,
     PandasReader instance must be supplied which implements read_db(),
     otherwise the cursor string is treated like a file path.
     :param cursor: Query instance or file path String
-    :param reader: DB connection object that extends PandasReader
-    :param environment: AWS environment name for spp logger
-    :param run_id: Run_id string for spp logger
-    :param survey: Survey name for spp logger
+    :param environment: Current running environment to pass to spp logger
     :param kwargs: Other keyword arguments to pass to pd.read_{format}()
+    :param reader: DB connection object that extends PandasReader
+    :param run_id: Current run_id to pass to spp logger
+    :param survey: Current running survey to pass to spp logger
     :returns Pandas DataFrame:
     """
     # If cursor looks like query
@@ -77,12 +77,12 @@ def spark_read(spark, cursor, environment,
     Reads data into a DataFrame using Spark. If the cursor is an SPP Query,
     the Spark metastore is used,
     otherwise the cursor is treated like a file path.
-    :param spark: Spark session
     :param cursor: Query instance or file path String
-    :param environment: AWS environment name for spp logger
-    :param run_id: Run_id string for spp logger
-    :param survey: Survey name for spp logger
+    :param environment: Current running environment to pass to spp logger
     :param kwargs: Other keyword arguments to pass to spark.read.load()
+    :param run_id: Current run_id to pass to spp logger
+    :param spark: Spark session
+    :param survey: Current running survey to pass to spp logger
     :returns Spark DataFrame:
     """
 
