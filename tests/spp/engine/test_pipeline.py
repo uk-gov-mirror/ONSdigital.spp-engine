@@ -43,9 +43,12 @@ def test_aws_small_method(mock_class, mock_method, mock_crawl):
                                      "partition_by": ["run_id"]
                                  },
                                  True,
+                                 "sandbox",
+                                 "BMI_SG",
                                  {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_method.run(p_module.Platform.AWS, "test_crawler")
+    test_method.run(p_module.Platform.AWS, "test_crawler", "BMI_SG", "sandbox",
+                    "RSI_20200520_15141987")
 
 
 @patch('spp.engine.pipeline.crawl')
@@ -78,11 +81,16 @@ def test_aws_big_method(mock_class, mock_method, crawl, create_session):
                                      "format": "parquet",
                                      "save_mode": "append",
                                      "partition_by": ["run_id"]
-                                 }, True,
+                                 },
+                                 True,
+                                 "sandbox",
+                                 "BMI_SG",
                                  {"param_1": "col_1", "param_2": "col_2",
                                   "param_3": "col_3"})
 
-    test_method.run(p_module.Platform.AWS, "test-crawler", True)
+    test_method.run(p_module.Platform.AWS, "test-crawler",
+                    "BMI_SG", "sandbox",
+                    "RSI_20200520_15141987", True)
 
 
 @patch('spp.engine.pipeline.crawl')
@@ -105,7 +113,8 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", "000001", p_module.Platform.AWS, False)
+    test_pipeline = Pipeline("Test", "000001", "sandbox",
+                             "BMI_SG", p_module.Platform.AWS, False)
 
     test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_c",
                                        "tests.test_methods.sd.small_data",
@@ -122,7 +131,9 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
                                            "save_mode": "append",
                                            "partition_by": ["run_id"]
                                        }, True,
-                                       {"param_1": 0, "param_2": 1, "param_3": 3})
+                                       {"param_1": 0, "param_2": 1, "param_3": 3},
+                                       "sandbox",
+                                       "BMI_SG")
 
     test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_d",
                                        "tests.test_methods.sd.small_data",
@@ -146,9 +157,12 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
                                            "partition_by": ["run_id"]
                                        }, True,
                                        {"param_1": "reporting_date",
-                                        "param_2": "entity_name"})
+                                        "param_2": "entity_name"},
+                                       "sandbox",
+                                       "BMI_SG")
 
-    test_pipeline.run(p_module.Platform.AWS, "test-crawler")
+    test_pipeline.run(p_module.Platform.AWS, "test-crawler", "BMI_SG",
+                      "sandbox", "RSI_20200520_15141987")
 
 
 @patch('spp.engine.pipeline.crawl')
@@ -190,7 +204,8 @@ def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", "000001", p_module.Platform.AWS, True)
+    test_pipeline = Pipeline("Test", "000001", "sandbox", "BMI_SG",
+                             p_module.Platform.AWS, True)
 
     test_pipeline.add_pipeline_methods("run_id", "method_a",
                                        "tests.test_methods.bd.big_data",
@@ -208,7 +223,9 @@ def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
                                            "partition_by": ["run_id"]
                                        }, True,
                                        {"param_1": "col_1", "param_2": "col_2",
-                                        "param_3": "col_3"})
+                                        "param_3": "col_3"},
+                                       "sandbox",
+                                       "BMI_SG")
 
     test_pipeline.add_pipeline_methods("run_id", "method_b",
                                        "tests.test_methods.bd.big_data",
@@ -231,6 +248,9 @@ def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
                                            "partition_by": ["run_id"]
                                        }, True,
                                        {"param_1": "reporting_date",
-                                        "param_2": "entity_name"})
+                                        "param_2": "entity_name"},
+                                       "sandbox",
+                                       "BMI_SG")
 
-    test_pipeline.run(platform=p_module.Platform.AWS, crawler_name="test-crawler")
+    test_pipeline.run(platform=p_module.Platform.AWS, crawler_name="test-crawler",
+                      survey="BMI_SG", environment="sandbox", run_id="run_id")
