@@ -35,11 +35,15 @@ class PipelineMethod:
                  survey, params=None):
         """
         Initialise the attributes of the class
-        :param name: String
-        :param module: String
         :param data_source: list of Dict[String, Dict]
         :param data_target: target location
+        :param environment: Current running environment to pass to logger
+        :param module: Method module name
+        :param name: Method name
         :param params: Dict[String, Any]
+        :param run_id: Current run_id to pass on to spp logger
+        :param survey: Current running survey to pass to logger
+        :param write: Boolean of whether to write results to location
         """
         try:
             self.logger = general_functions.get_logger(survey, current_module,
@@ -90,9 +94,12 @@ class PipelineMethod:
             survey, environment, run_id, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
-        :param platform:
         :param crawler_name: Name of the glue crawler
-        :param spark:
+        :param environment: Current running survey to be passed to spp logger
+        :param platform: The platform the code is running on, most likely AWS
+        :param run_id: Current run_id to be passed to spp logger
+        :param spark: SparkSession builder
+        :param survey: Current running survey to be passed to spp logger
         :return:
         """
         self.logger.info("Retrieving data")
@@ -151,7 +158,8 @@ class PipelineMethod:
                                run_id=run_id, survey=survey, spark=spark)
                     self.logger.debug("Writing output: {}".format(outputs))
                 self.logger.info("Finished writing outputs Method run complete")
-            crawl(crawler_name=crawler_name)
+            crawl(crawler_name=crawler_name, environment=environment,
+                  run_id=run_id, survey=survey)
         else:
             self.logger.info("Returning outputs dataframe")
             return outputs
@@ -173,14 +181,17 @@ class Pipeline:
                  is_spark=False, bpm_queue_url=None):
         """
         Initialises the attributes of the class.
-        :param name:
-        :param platform: Platform
-        :param is_spark: Boolean
         :param bpm_queue_url: String or None if there is no queue to send status to
+        :param environment: Current running environment to be passed to spp logger
+        :param is_spark: Boolean
+        :param name: Name of pipeline run
+        :param platform: Platform
+        :param run_id: Current run_id to be passed to logger
+        :param survey: Current running survey to be passed to spp logger
         """
         try:
             self.logger = general_functions.get_logger(survey, current_module,
-                                                  environment, run_id)
+                                                       environment, run_id)
         except Exception as e:
             raise Exception("{}:Exception raised: {}".format(current_module, e))
         self.logger.info("Initializing Pipeline")
@@ -200,16 +211,16 @@ class Pipeline:
                              survey):
         """
         Adds a new method to the pipeline
-        :param run_id: run_id - String
-        :param name: String
-        :param module: String
         :param data_source: list of Dict[String, Dict]
         :param data_target: dictionary of string related to write.such as location,
         format and partition column.
-        :param write: Whether or not to write the data - Boolean
+        :param environment: Current running environment to pass to spp logger
+        :param module: Method module name from config
+        :param name: Method name from config
         :param params: Dict[String, Any]
-        :param environment: String
-        :param survey: String
+        :param run_id: run_id - String
+        :param survey: Current running survey to pass to spp logger
+        :param write: Whether or not to write the data - Boolean
         :return:
         """
         self.logger.info("Adding Method to Pipeline")
@@ -228,9 +239,9 @@ class Pipeline:
     def send_status(self, status, module_name, current_step_num=None):
         """
         Send a status message for the pipeline
-        :param status: The status to send - String
-        :param module_name: the name of the module to be reported - String
         :param current_step_num: the number of the step in the pipeline - Int or None
+        :param module_name: the name of the module to be reported - String
+        :param status: The status to send - String
         :return:
         """
         if self.bpm_queue_url is None:
@@ -242,10 +253,14 @@ class Pipeline:
                                       total_steps=len(self.methods))
 
     def run(self, platform, crawler_name,
-            survey, environment, run_id=run_id):
+            survey, environment, run_id):
         """
         Runs the methods of the pipeline
+        :param crawler_name: Name of glue crawler to run for each method
+        :param environment: Current running environment to pass to spp logger
         :param platform: Platform
+        :param run_id: Current run_id to pass to spp logger
+        :param survey: Current running survey to pass to spp logger
         :return:
         """
         self.logger.info("Running Pipeline: {}".format(self.name))
