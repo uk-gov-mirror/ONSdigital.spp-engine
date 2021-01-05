@@ -65,7 +65,7 @@ def test_db_table_single_select_where():
     expected_query = "SELECT column FROM test.test WHERE column = test;"
     assert expected_query == str(Query("test", "test", select="column",
                                        where=[{"column": "column",
-                                         "condition": "=", "value": "test"}],
+                                               "condition": "=", "value": "test"}],
                                        environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
 
