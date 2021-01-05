@@ -25,9 +25,12 @@ class DataAccess:
         :param query: spp.utils.query.Query
         :return:
         """
+        self.environment = environment
+        self.run_id = run_id
+        self.survey = survey
         try:
-            self.logger = general_functions.get_logger(survey, current_module,
-                                                       environment, run_id)
+            self.logger = general_functions.get_logger(self.survey, current_module,
+                                                       self.environment, self.run_id)
         except Exception as e:
             raise Exception("{}:Exception raised: {}".format(current_module, e))
         self.logger.info("Initializing DataAccess")
@@ -48,15 +51,18 @@ class DataAccess:
 
         if spark is not None:
             self.logger.info("DataAccess: read data into spark dataframe")
-            return spark_read(spark=spark, cursor=self.query)
+            return spark_read(environment=self.environment, run_id=self.run_id,
+                              survey=self.survey, spark=spark, cursor=self.query)
         else:
             if (platform == spp.engine.pipeline.Platform.AWS.value) & \
                     (isinstance(self.query, Query)):
                 self.logger.info("DataAccess: read data into pandas dataframe")
-                return pandas_read(cursor=self.query, reader=PandasAthenaReader())
+                return pandas_read(cursor=self.query, environment=self.environment,
+                                   run_id=self.run_id, survey=self.survey, reader=PandasAthenaReader())
             else:
                 self.logger.info("DataAccess: read data into pandas dataframe")
-                return pandas_read(cursor=self.query)
+                return pandas_read(cursor=self.query, environment=self.environment,
+                                   run_id=self.run_id, survey=self.survey)
 
 
 def write_data(output, data_target, platform,
