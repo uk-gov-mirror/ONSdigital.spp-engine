@@ -2,9 +2,9 @@ from spp.engine.read import spark_read, pandas_read, PandasAthenaReader
 from spp.engine.write import spark_write, pandas_write
 from spp.utils.query import Query
 import spp.engine.pipeline
-from spp.utils.logging import Logger
+from es_aws_functions import aws_functions, general_functions
 
-LOG = Logger(__name__).get()
+current_module = "DataAccess"
 
 
 class DataAccess:
@@ -17,14 +17,20 @@ class DataAccess:
     query = None
     name = None
 
-    def __init__(self, name, query):
+    def __init__(self, name, query, survey,
+                 environment, run_id):
         """
         Takes in the Query object that is used to access the data
         :param name: String
         :param query: spp.utils.query.Query
         :return:
         """
-        LOG.info("Initializing DataAccess")
+        try:
+            self.logger = general_functions.get_logger(survey, current_module,
+                                                       environment, run_id)
+        except Exception as e:
+            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger.info("Initializing DataAccess")
         self.query = query
         self.name = name
 
@@ -37,64 +43,80 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
-        LOG.info("DataAccess: read data:")
-        LOG.info("DataAccess: read data using : {}".format(self.query))
+        self.logger.info("DataAccess: read data:")
+        self.logger.info("DataAccess: read data using : {}".format(self.query))
 
         if spark is not None:
-            LOG.info("DataAccess: read data into spark dataframe")
+            self.logger.info("DataAccess: read data into spark dataframe")
             return spark_read(spark=spark, cursor=self.query)
         else:
             if (platform == spp.engine.pipeline.Platform.AWS.value) & \
                     (isinstance(self.query, Query)):
-                LOG.info("DataAccess: read data into pandas dataframe")
+                self.logger.info("DataAccess: read data into pandas dataframe")
                 return pandas_read(cursor=self.query, reader=PandasAthenaReader())
             else:
-                LOG.info("DataAccess: read data into pandas dataframe")
+                self.logger.info("DataAccess: read data into pandas dataframe")
                 return pandas_read(cursor=self.query)
 
 
-def write_data(output, data_target, platform, spark=None, counter=0):
+def write_data(output, data_target, platform,
+               environment, run_id, survey,
+               spark=None, counter=0):
     """
     This method may be removed as further requirements
     determine whether this should be a generic function
     :param output: Dataframe
     :param data_target: target location
     :param platform: Platform
+    :param environment: Environment name for logger
+    :param run_id: Run_id name for logger
+    :param survey: Survey name for logger
     :param spark: SparkSession
     :return:
     """
-    LOG.info("DataAccess: write data: ")
+    try:
+        logger = general_functions.get_logger(survey, current_module,
+                                              environment, run_id)
+    except Exception as e:
+        raise Exception("{}:Exception raised: {}".format(current_module, e))
+    logger.info("DataAccess: write data: ")
     if spark is not None:
-        LOG.info("DataAccess: write spark dataframe")
+        logger.info("DataAccess: write spark dataframe")
         spark_write(df=output, data_target=data_target, counter=counter)
-        LOG.info("DataAccess: written spark dataframe successfully")
+        logger.info("DataAccess: written spark dataframe successfully")
         return
     else:
-        LOG.info("DataAccess: write pandas dataframe")
+        logger.info("DataAccess: write pandas dataframe")
         pandas_write(df=output, data_target=data_target)
-        LOG.info("DataAccess: written pandas dataframe successfully")
+        logger.info("DataAccess: written pandas dataframe successfully")
         return
 
 
-def isPartitionColumnExists(df, list_partition_column, run_id, is_spark):
-    LOG.info('isPartitionColumnExists :: start..')
+def isPartitionColumnExists(df, list_partition_column, run_id, is_spark,
+                            environment, survey):
+    try:
+        logger = general_functions.get_logger(survey, current_module,
+                                              environment, run_id)
+    except Exception as e:
+        raise Exception("{}:Exception raised: {}".format(current_module, e))
+    logger.info('isPartitionColumnExists :: start..')
     if (df is not None) and (list_partition_column is not None) and is_spark:
         import pyspark.sql.functions as f
         columns = df.columns
         if 'run_id' not in columns:
-            LOG.info('inside spark run_id not exist')
+            logger.info('inside spark run_id not exist')
             df = df.withColumn('run_id', f.lit(run_id))
         elif 'run_id' in columns:
-            LOG.info('inside spark run_id exist')
+            logger.info('inside spark run_id exist')
             df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
     elif (df is not None) and (list_partition_column is not None) and not is_spark:
         columns = list(df.columns)
         if 'run_id' not in columns:
-            LOG.info('inside pandas run_id not exist')
+            logger.info('inside pandas run_id not exist')
             df['run_id'] = run_id
         elif 'run_id' in columns:
-            LOG.info('inside pandas run_id exist')
+            logger.info('inside pandas run_id exist')
             df = df.drop(columns=['run_id'])
             df['run_id'] = run_id
-    LOG.info('isPartitionColumnExists :: end..')
+    logger.info('isPartitionColumnExists :: end..')
     return df

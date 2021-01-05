@@ -1,7 +1,6 @@
 from enum import Enum
 from spp.engine.data_access import write_data, \
     DataAccess, isPartitionColumnExists
-from spp.utils.logging import Logger
 import importlib
 from spp.aws.glue_crawler import crawl
 
@@ -55,9 +54,11 @@ class PipelineMethod:
         self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
-        self.__populateDataAccess(data_source)
+        self.__populateDataAccess(data_source, survey, environment,
+                                  run_id)
 
-    def __populateDataAccess(self, data_source):
+    def __populateDataAccess(self, data_source, survey, environment,
+                             run_id):
         da_key = []
         da_value = []
         for da in data_source:
@@ -80,9 +81,11 @@ class PipelineMethod:
                     query = d_info[key]
                 elif key == "sql":
                     query = d_info[key]
-            self.data_in.append(DataAccess(name, query))
+            self.data_in.append(DataAccess(name, query, survey,
+                                           environment, run_id))
 
-    def run(self, platform, crawler_name, spark=None):
+    def run(self, platform, crawler_name,
+            survey, environment, run_id, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
         :param platform:
@@ -129,17 +132,21 @@ class PipelineMethod:
                         output = isPartitionColumnExists(output,
                                                          self.data_target[
                                                              'partition_by'],
-                                                         str(self.run_id), is_spark)
+                                                         str(self.run_id), is_spark,
+                                                         environment, survey)
                         write_data(output=output, data_target=self.data_target,
-                                   platform=platform, spark=spark,
+                                   platform=platform, environment=environment,
+                                   run_id=run_id, survey=survey, spark=spark,
                                    counter=count)
                         self.logger.debug("Writing output: {}".format(output))
                 else:
                     outputs = isPartitionColumnExists(outputs,
                                                       self.data_target['partition_by'],
-                                                      str(self.run_id), is_spark)
+                                                      str(self.run_id), is_spark,
+                                                      environment, survey)
                     write_data(output=outputs, data_target=self.data_target,
-                               platform=platform, spark=spark)
+                               platform=platform, environment=environment,
+                               run_id=run_id, survey=survey, spark=spark)
                     self.logger.debug("Writing output: {}".format(outputs))
                 self.logger.info("Finished writing outputs Method run complete")
             crawl(crawler_name=crawler_name)
@@ -232,7 +239,8 @@ class Pipeline:
                                       current_step_num=current_step_num,
                                       total_steps=len(self.methods))
 
-    def run(self, platform, crawler_name):
+    def run(self, platform, crawler_name,
+            survey, environment, run_id=run_id):
         """
         Runs the methods of the pipeline
         :param platform: Platform
@@ -246,7 +254,8 @@ class Pipeline:
             # to be 1-indexed
             step_num = method_num+1
             self.send_status('IN PROGRESS', method.method_name, current_step_num=step_num)
-            method.run(platform, crawler_name, self.spark)
+            method.run(platform, crawler_name,
+                       survey, environment, run_id, self.spark)
             self.send_status('DONE', method.method_name, current_step_num=step_num)
             self.logger.info("Method Finished: {}".format(method.method_name))
 
