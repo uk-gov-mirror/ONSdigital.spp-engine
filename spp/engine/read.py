@@ -1,5 +1,5 @@
 from spp.utils.query import Query
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import general_functions
 import importlib
 
 current_module = "SPP Engine - Read"

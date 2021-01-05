@@ -1,6 +1,6 @@
 import boto3
 import time
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import general_functions
 
 current_module = "SPP Engine - Glue Crawler"
 
@@ -8,7 +8,7 @@ current_module = "SPP Engine - Glue Crawler"
 def crawl(crawler_name, environment, run_id, survey):
     try:
         logger = general_functions.get_logger(survey, current_module,
-                                                   environment, run_id)
+                                              environment, run_id)
     except Exception as e:
         raise Exception("{}:Exception raised: {}".format(current_module, e))
     logger.info("crawler : {}".format(crawler_name)+" starts..")

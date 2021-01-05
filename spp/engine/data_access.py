@@ -2,7 +2,7 @@ from spp.engine.read import spark_read, pandas_read, PandasAthenaReader
 from spp.engine.write import spark_write, pandas_write
 from spp.utils.query import Query
 import spp.engine.pipeline
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import general_functions
 
 current_module = "DataAccess"
 
@@ -61,7 +61,8 @@ class DataAccess:
                     (isinstance(self.query, Query)):
                 self.logger.info("DataAccess: read data into pandas dataframe")
                 return pandas_read(cursor=self.query, environment=self.environment,
-                                   run_id=self.run_id, survey=self.survey, reader=PandasAthenaReader())
+                                   run_id=self.run_id, survey=self.survey,
+                                   reader=PandasAthenaReader())
             else:
                 self.logger.info("DataAccess: read data into pandas dataframe")
                 return pandas_read(cursor=self.query, environment=self.environment,

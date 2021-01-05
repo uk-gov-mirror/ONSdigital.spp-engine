@@ -116,9 +116,11 @@ class PipelineMethod:
             raise e
         self.logger.info("Calling Method")
         try:
-            self.logger.debug("Calling Method: {} with parameters {} {}".format(self.method_name,
-                                                                                inputs,
-                                                                                self.params))
+            self.logger.debug(
+                "Calling Method: {} with parameters {} {}".format(self.method_name,
+                                                                  inputs,
+                                                                  self.params)
+            )
             outputs = getattr(module, self.method_name)(**inputs, **self.params)
         except TypeError as e:
             self.logger.error("Incorrect Parameters for method called.")
@@ -298,9 +300,11 @@ def construct_pipeline(config, survey):
     )
 
     for method in config['methods']:
-        logger.debug("Adding method with name {}, module {}, queries {}, params {}".format(
-            method['name'], method['module'], method['data_access'], method['params']
-        ))
+        logger.debug(
+            "Adding method with name {}, module {}, queries {}, params {}".format(
+                method['name'], method['module'], method['data_access'], method['params']
+            )
+        )
         if method['write']:
             write_data_to = method['data_write'][0]
         else:
@@ -309,8 +313,8 @@ def construct_pipeline(config, survey):
                                       name=method['name'], module=method['module'],
                                       data_source=method['data_access'],
                                       data_target=write_data_to, write=method['write'],
-                                      params=method['params'][0], environment=config["environment"],
-                                      survey=survey
+                                      params=method['params'][0],
+                                      environment=config["environment"], survey=survey
                                       )
 
     return pipeline

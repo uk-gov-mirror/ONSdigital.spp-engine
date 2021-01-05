@@ -1,4 +1,4 @@
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import general_functions
 
 current_module = "SPP Engine - Query"
 

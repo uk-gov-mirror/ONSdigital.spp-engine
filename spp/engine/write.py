@@ -1,4 +1,4 @@
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import general_functions
 from spp.aws.s3.write_to_s3 import write_pandasDf_to_s3, write_sparkDf_to_s3
 
 current_module = "SPP Engine - Write"

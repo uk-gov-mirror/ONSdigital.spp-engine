@@ -3,12 +3,10 @@ from __future__ import unicode_literals
 import json
 import sys
 
-from spp.utils.logging import Logger
 from spp.engine.pipeline import construct_pipeline
 
-import boto3
 from awsglue.utils import getResolvedOptions
-from es_aws_functions import exception_classes, general_functions
+from es_aws_functions import general_functions
 
 current_module = "spp-res_glu_emr"
 args = getResolvedOptions(sys.argv, ['config', 'crawler-name'])
