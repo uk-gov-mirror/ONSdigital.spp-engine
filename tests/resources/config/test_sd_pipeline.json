@@ -4,6 +4,7 @@
     "spark": false,
     "platform": "AWS",
     "run_id": "000002",
+    "environment": "sandbox",
     "methods": [{
       "name": "method_c",
       "module": "tests.test_methods.sd.small_data",
