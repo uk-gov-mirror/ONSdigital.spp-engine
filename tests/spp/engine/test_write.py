@@ -18,7 +18,8 @@ def test_spark_write_csv(write_to_s3, create_session):
         "partition_by": ["_c0"]
     }
 
-    spark_write(df, test_target, counter=0)
+    spark_write(df, test_target, counter=0, environment="sandbox",
+                run_id="fake_run_id", survey="BMI_SG")
     assert write_to_s3.call_args[0][1]['location'] == \
            suite_location + "/test_spark_write_file.csv"
 
@@ -34,7 +35,8 @@ def test_spark_write_json(write_to_s3, create_session):
         "partition_by": ["a"]
     }
 
-    spark_write(df, test_target, counter=0)
+    spark_write(df, test_target, counter=0, environment="sandbox",
+                run_id="fake_run_id", survey="BMI_SG")
     assert write_to_s3.call_args[0][1]['location'] == \
         suite_location + "/test_spark_write_file.json"
 
@@ -50,7 +52,8 @@ def test_spark_write_file_with_partitions(write_to_s3, create_session):
         "partition_by": ["_c0"]
     }
 
-    spark_write(df, test_target, counter=0, partitions=['_c0'])
+    spark_write(df, test_target, counter=0, environment="sandbox",
+                run_id="fake_run_id", survey="BMI_SG", partitions=['_c0'])
     assert write_to_s3.call_args[0][1]['location'] == \
         suite_location + "/test_spark_write_file_with_partitions.csv"
 
@@ -69,6 +72,7 @@ def test_pandas_write_parquet(write_to_s3):
     if not os.path.exists(suite_location):
         os.mkdir(suite_location)
 
-    pandas_write(df, test_target, counter=0)
+    pandas_write(df, test_target, counter=0, environment="sandbox",
+                 run_id="fake_run_id", survey="BMI_SG")
     assert write_to_s3.call_args[0][1]['location'] == \
         suite_location + "/test_pandas_write_file.parquet"
