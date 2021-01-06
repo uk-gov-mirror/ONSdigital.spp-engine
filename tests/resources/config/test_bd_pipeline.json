@@ -4,6 +4,7 @@
     "spark": true,
     "platform": "AWS",
     "run_id": "000001",
+    "environment": "sandbox",
     "methods": [{
       "name": "method_a",
       "module": "tests.test_methods.bd.big_data",

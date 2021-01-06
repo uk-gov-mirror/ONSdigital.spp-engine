@@ -17,7 +17,7 @@ with open("./tests/resources/config/test_sd_pipeline.json") as f:
 
 
 def test_parse_config_bd():
-    pipeline = construct_pipeline(test_bd_json['pipeline'])
+    pipeline = construct_pipeline(test_bd_json['pipeline'], "BMI_SG")
 
     assert pipeline.name == 'test_pipeline'
     assert isinstance(pipeline.spark, SparkSession)
@@ -42,7 +42,7 @@ def test_parse_config_bd():
 
 
 def test_parse_config_sd():
-    pipeline = construct_pipeline(test_sd_json['pipeline'])
+    pipeline = construct_pipeline(test_sd_json['pipeline'], "BMI_SG")
 
     assert pipeline.name == 'test_sd_pipeline'
     assert not pipeline.spark

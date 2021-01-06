@@ -1,15 +1,14 @@
 from enum import Enum
 from spp.engine.data_access import write_data, \
     DataAccess, isPartitionColumnExists
-from spp.utils.logging import Logger
 import importlib
 from spp.aws.glue_crawler import crawl
 
 from spp.utils.query import Query
 
-from es_aws_functions import aws_functions
+from es_aws_functions import aws_functions, general_functions
 
-LOG = Logger(__name__).get()
+current_module = "SPP-Engine - Pipeline"
 
 
 class Platform(Enum):
@@ -32,16 +31,26 @@ class PipelineMethod:
     data_in = None
 
     def __init__(self, run_id, name, module, data_source,
-                 data_target, write, params=None):
+                 data_target, write, environment,
+                 survey, params=None):
         """
         Initialise the attributes of the class
-        :param name: String
-        :param module: String
         :param data_source: list of Dict[String, Dict]
         :param data_target: target location
+        :param environment: Current running environment to pass to logger
+        :param module: Method module name
+        :param name: Method name
         :param params: Dict[String, Any]
+        :param run_id: Current run_id to pass on to spp logger
+        :param survey: Current running survey to pass to logger
+        :param write: Boolean of whether to write results to location
         """
-        LOG.info("Initializing Method")
+        try:
+            self.logger = general_functions.get_logger(survey, current_module,
+                                                       environment, run_id)
+        except Exception as e:
+            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger.info("Initializing Method")
         self.method_name = name
         self.module_name = module
         self.write = write
@@ -49,9 +58,11 @@ class PipelineMethod:
         self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
-        self.__populateDataAccess(data_source)
+        self.__populateDataAccess(data_source, survey, environment,
+                                  run_id)
 
-    def __populateDataAccess(self, data_source):
+    def __populateDataAccess(self, data_source, survey, environment,
+                             run_id):
         da_key = []
         da_value = []
         for da in data_source:
@@ -60,6 +71,8 @@ class PipelineMethod:
             if ('database' in da) and (da['database'] is not None):
                 tmp_sql = Query(database=da['database'],
                                 table=da['table'],
+                                environment=environment,
+                                survey=survey,
                                 select=da['select'],
                                 where=da['where'],
                                 run_id=self.run_id)
@@ -74,47 +87,54 @@ class PipelineMethod:
                     query = d_info[key]
                 elif key == "sql":
                     query = d_info[key]
-            self.data_in.append(DataAccess(name, query))
+            self.data_in.append(DataAccess(name, query, survey,
+                                           environment, run_id))
 
-    def run(self, platform, crawler_name, spark=None):
+    def run(self, platform, crawler_name,
+            survey, environment, run_id, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
-        :param platform:
         :param crawler_name: Name of the glue crawler
-        :param spark:
+        :param environment: Current running survey to be passed to spp logger
+        :param platform: The platform the code is running on, most likely AWS
+        :param run_id: Current run_id to be passed to spp logger
+        :param spark: SparkSession builder
+        :param survey: Current running survey to be passed to spp logger
         :return:
         """
-        LOG.info("Retrieving data")
+        self.logger.info("Retrieving data")
         inputs = {data.name: data.pipeline_read_data(platform, spark)
                   for data in self.data_in}
-        LOG.info("Data Retrieved")
-        LOG.debug("Retrieved data : {}".format(inputs))
-        LOG.info("Importing Module")
+        self.logger.info("Data Retrieved")
+        self.logger.debug("Retrieved data : {}".format(inputs))
+        self.logger.info("Importing Module")
         try:
             module = importlib.import_module(self.module_name)
-            LOG.debug("Imported {}".format(module))
+            self.logger.debug("Imported {}".format(module))
         except Exception as e:
-            LOG.exception("Cant import module {}".format(self.module_name))
+            self.logger.error("Cant import module {}".format(self.module_name))
             raise e
-        LOG.info("Calling Method")
+        self.logger.info("Calling Method")
         try:
-            LOG.debug("Calling Method: {} with parameters {} {}".format(self.method_name,
-                                                                        inputs,
-                                                                        self.params))
+            self.logger.debug(
+                "Calling Method: {} with parameters {} {}".format(self.method_name,
+                                                                  inputs,
+                                                                  self.params)
+            )
             outputs = getattr(module, self.method_name)(**inputs, **self.params)
         except TypeError as e:
-            LOG.exception("Incorrect Parameters for method called.")
+            self.logger.error("Incorrect Parameters for method called.")
             raise e
         except ValueError as e:
-            LOG.exception("Issue with getting parameter name.")
+            self.logger.error("Issue with getting parameter name.")
             raise e
         except Exception as e:
-            LOG.exception("Issue calling method")
+            self.logger.error("Issue calling method")
             raise e
 
         if self.write:
-            LOG.info("Writing outputs")
-            LOG.debug("Writing outputs: {}".format(outputs))
+            self.logger.info("Writing outputs")
+            self.logger.debug("Writing outputs: {}".format(outputs))
             if self.data_target is not None:
                 is_spark = True if spark is not None else False
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
@@ -123,28 +143,33 @@ class PipelineMethod:
                         output = isPartitionColumnExists(output,
                                                          self.data_target[
                                                              'partition_by'],
-                                                         str(self.run_id), is_spark)
+                                                         str(self.run_id), is_spark,
+                                                         environment, survey)
                         write_data(output=output, data_target=self.data_target,
-                                   platform=platform, spark=spark,
+                                   platform=platform, environment=environment,
+                                   run_id=run_id, survey=survey, spark=spark,
                                    counter=count)
-                        LOG.debug("Writing output: {}".format(output))
+                        self.logger.debug("Writing output: {}".format(output))
                 else:
                     outputs = isPartitionColumnExists(outputs,
                                                       self.data_target['partition_by'],
-                                                      str(self.run_id), is_spark)
+                                                      str(self.run_id), is_spark,
+                                                      environment, survey)
                     write_data(output=outputs, data_target=self.data_target,
-                               platform=platform, spark=spark)
-                    LOG.debug("Writing output: {}".format(outputs))
-                LOG.info("Finished writing outputs Method run complete")
-            crawl(crawler_name=crawler_name)
+                               platform=platform, environment=environment,
+                               run_id=run_id, survey=survey, spark=spark)
+                    self.logger.debug("Writing output: {}".format(outputs))
+                self.logger.info("Finished writing outputs Method run complete")
+            crawl(crawler_name=crawler_name, environment=environment,
+                  run_id=run_id, survey=survey)
         else:
-            LOG.info("Returning outputs dataframe")
+            self.logger.info("Returning outputs dataframe")
             return outputs
 
 
 class Pipeline:
     """
-    Wrapper to contain the pipeline methods and enable their callling
+    Wrapper to contain the pipeline methods and enable their calling
     """
     platform = None
     name = None
@@ -152,21 +177,31 @@ class Pipeline:
     spark = None
     run_id = None
 
-    def __init__(self, name, run_id, platform=Platform.AWS, is_spark=False,
-                 bpm_queue_url=None):
+    def __init__(self, name, run_id,
+                 environment, survey,
+                 platform=Platform.AWS,
+                 is_spark=False, bpm_queue_url=None):
         """
         Initialises the attributes of the class.
-        :param name:
-        :param platform: Platform
-        :param is_spark: Boolean
         :param bpm_queue_url: String or None if there is no queue to send status to
+        :param environment: Current running environment to be passed to spp logger
+        :param is_spark: Boolean
+        :param name: Name of pipeline run
+        :param platform: Platform
+        :param run_id: Current run_id to be passed to logger
+        :param survey: Current running survey to be passed to spp logger
         """
-        LOG.info("Initializing Pipeline")
+        try:
+            self.logger = general_functions.get_logger(survey, current_module,
+                                                       environment, run_id)
+        except Exception as e:
+            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger.info("Initializing Pipeline")
         self.name = name
         self.platform = platform
         self.run_id = run_id
         if is_spark:
-            LOG.info("Starting Spark Session for APP {}".format(name))
+            self.logger.info("Starting Spark Session for APP {}".format(name))
             from pyspark.sql import SparkSession
             self.spark = SparkSession.builder.appName(name).getOrCreate()
             # self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
@@ -174,21 +209,24 @@ class Pipeline:
         self.methods = []
 
     def add_pipeline_methods(self, run_id, name, module, data_source,
-                             data_target, write, params):
+                             data_target, write, params, environment,
+                             survey):
         """
         Adds a new method to the pipeline
-        :param run_id: run_id - String
-        :param name: String
-        :param module: String
         :param data_source: list of Dict[String, Dict]
         :param data_target: dictionary of string related to write.such as location,
         format and partition column.
-        :param write: Whether or not to write the data - Boolean
+        :param environment: Current running environment to pass to spp logger
+        :param module: Method module name from config
+        :param name: Method name from config
         :param params: Dict[String, Any]
+        :param run_id: run_id - String
+        :param survey: Current running survey to pass to spp logger
+        :param write: Whether or not to write the data - Boolean
         :return:
         """
-        LOG.info("Adding Method to Pipeline")
-        LOG.debug(
+        self.logger.info("Adding Method to Pipeline")
+        self.logger.debug(
             "Adding Method: {} , from Module {}, With parameters {}, "
             "retrieving data from {}, writing to {}.".format(
                 name,
@@ -197,14 +235,15 @@ class Pipeline:
                 data_source,
                 str(data_target)))
         self.methods.append(PipelineMethod(run_id, name, module,
-                                           data_source, data_target, write, params))
+                                           data_source, data_target, write,
+                                           environment, survey, params))
 
     def send_status(self, status, module_name, current_step_num=None):
         """
         Send a status message for the pipeline
-        :param status: The status to send - String
-        :param module_name: the name of the module to be reported - String
         :param current_step_num: the number of the step in the pipeline - Int or None
+        :param module_name: the name of the module to be reported - String
+        :param status: The status to send - String
         :return:
         """
         if self.bpm_queue_url is None:
@@ -215,41 +254,57 @@ class Pipeline:
                                       current_step_num=current_step_num,
                                       total_steps=len(self.methods))
 
-    def run(self, platform, crawler_name):
+    def run(self, platform, crawler_name,
+            survey, environment, run_id):
         """
         Runs the methods of the pipeline
+        :param crawler_name: Name of glue crawler to run for each method
+        :param environment: Current running environment to pass to spp logger
         :param platform: Platform
+        :param run_id: Current run_id to pass to spp logger
+        :param survey: Current running survey to pass to spp logger
         :return:
         """
-        LOG.info("Running Pipeline: {}".format(self.name))
+        self.logger.info("Running Pipeline: {}".format(self.name))
         self.send_status("IN PROGRESS", self.name)
         for method_num, method in enumerate(self.methods):
-            LOG.info("Running Method: {}".format(method.method_name))
+            self.logger.info("Running Method: {}".format(method.method_name))
             # method_num is 0-indexed but we probably want step numbers
             # to be 1-indexed
             step_num = method_num+1
             self.send_status('IN PROGRESS', method.method_name, current_step_num=step_num)
-            method.run(platform, crawler_name, self.spark)
+            method.run(platform, crawler_name,
+                       survey, environment, run_id, self.spark)
             self.send_status('DONE', method.method_name, current_step_num=step_num)
-            LOG.info("Method Finished: {}".format(method.method_name))
+            self.logger.info("Method Finished: {}".format(method.method_name))
 
         self.send_status('DONE', self.name)
 
 
-def construct_pipeline(config):
-    LOG.debug("Constructing pipeline with name {}, platform {}, is_spark {}".format(
+def construct_pipeline(config, survey):
+
+    try:
+        logger = general_functions.get_logger(survey, current_module,
+                                              config['environment'], config['run_id'])
+    except Exception as e:
+        raise Exception("{}:Exception raised: {}".format(current_module, e))
+
+    logger.info("Constructing pipeline with name {}, platform {}, is_spark {}".format(
         config['name'], config['platform'], config['spark']
     ))
     pipeline = Pipeline(
         name=config['name'], run_id=config['run_id'],
         platform=config['platform'], is_spark=config['spark'],
-        bpm_queue_url=config.get('bpm_queue_url')
+        bpm_queue_url=config.get('bpm_queue_url'),
+        environment=config["environment"], survey=survey
     )
 
     for method in config['methods']:
-        LOG.debug("Adding method with name {}, module {}, queries {}, params {}".format(
-            method['name'], method['module'], method['data_access'], method['params']
-        ))
+        logger.debug(
+            "Adding method with name {}, module {}, queries {}, params {}".format(
+                method['name'], method['module'], method['data_access'], method['params']
+            )
+        )
         if method['write']:
             write_data_to = method['data_write'][0]
         else:
@@ -258,7 +313,8 @@ def construct_pipeline(config):
                                       name=method['name'], module=method['module'],
                                       data_source=method['data_access'],
                                       data_target=write_data_to, write=method['write'],
-                                      params=method['params'][0]
+                                      params=method['params'][0],
+                                      environment=config["environment"], survey=survey
                                       )
 
     return pipeline
