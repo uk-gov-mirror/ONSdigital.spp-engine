@@ -92,12 +92,14 @@ def write_data(output, data_target, platform,
     logger.info("DataAccess: write data: ")
     if spark is not None:
         logger.info("DataAccess: write spark dataframe")
-        spark_write(df=output, data_target=data_target, counter=counter)
+        spark_write(df=output, data_target=data_target, counter=counter,
+                    environment=environment, run_id=run_id, survey=survey)
         logger.info("DataAccess: written spark dataframe successfully")
         return
     else:
         logger.info("DataAccess: write pandas dataframe")
-        pandas_write(df=output, data_target=data_target)
+        pandas_write(df=output, data_target=data_target,
+                     environment=environment, run_id=run_id, survey=survey)
         logger.info("DataAccess: written pandas dataframe successfully")
         return
 
