@@ -267,19 +267,26 @@ class Pipeline:
         """
         self.logger.info("Running Pipeline: {}".format(self.name))
         self.send_status("IN PROGRESS", self.name)
-        for method_num, method in enumerate(self.methods):
-            self.logger.info("Running Method: {}".format(method.method_name))
-            # method_num is 0-indexed but we probably want step numbers
-            # to be 1-indexed
-            step_num = method_num+1
-            self.send_status('IN PROGRESS', method.method_name, current_step_num=step_num)
-            method.run(platform, crawler_name,
-                       survey, environment, run_id, self.spark)
-            self.send_status('DONE', method.method_name, current_step_num=step_num)
-            self.logger.info("Method Finished: {}".format(method.method_name))
+        try:
+            for method_num, method in enumerate(self.methods):
+                self.logger.info("Running Method: {}".format(method.method_name))
+                # method_num is 0-indexed but we probably want step numbers
+                # to be 1-indexed
+                step_num = method_num+1
+                self.send_status('IN PROGRESS', method.method_name, current_step_num=step_num)
+                method.run(platform, crawler_name,
+                           survey, environment, run_id, self.spark)
+                self.send_status('DONE', method.method_name, current_step_num=step_num)
+                self.logger.info("Method Finished: {}".format(method.method_name))
 
-        self.send_status('DONE', self.name)
-
+            self.send_status('DONE', self.name)
+        except Exception as e:
+            general_functions.handle_exceptions(
+                exception=e,
+                module=self.name,
+                run_id=self.run_id,
+                bpm_queue_url=self.bpm_queue_url
+            )
 
 def construct_pipeline(config, survey):
 
