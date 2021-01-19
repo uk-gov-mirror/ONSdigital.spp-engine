@@ -281,7 +281,7 @@ class Pipeline:
 
             self.send_status('DONE', self.name)
         except Exception as e:
-            general_functions.handle_exceptions(
+            general_functions.handle_exception(
                 exception=e,
                 module=self.name,
                 run_id=self.run_id,
