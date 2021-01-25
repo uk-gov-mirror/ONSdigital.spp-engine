@@ -54,12 +54,9 @@ class PipelineMethod:
         :param survey: Current running survey to pass to logger
         :param write: Boolean of whether to write results to location
         """
-        try:
-            self.logger = general_functions.get_logger(
-                survey, current_module, environment, run_id
-            )
-        except Exception as e:
-            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger = general_functions.get_logger(
+            survey, current_module, environment, run_id
+        )
         self.logger.info("Initializing Method")
         self.method_name = name
         self.module_name = module
@@ -110,21 +107,21 @@ class PipelineMethod:
         :param survey: Current running survey to be passed to spp logger
         :return:
         """
-        self.logger.info("Retrieving data")
+        self.logger.debug("Retrieving data")
         inputs = {
             data.name: data.pipeline_read_data(platform, spark) for data in self.data_in
         }
-        self.logger.info("Data Retrieved")
+        self.logger.debug("Data Retrieved")
         self.logger.debug("Retrieved data : {}".format(inputs))
-        self.logger.info("Importing Module")
+        self.logger.debug("Importing Module")
         try:
             module = importlib.import_module(self.module_name)
             self.logger.debug("Imported {}".format(module))
         except Exception as e:
             self.logger.error("Cant import module {}".format(self.module_name))
             raise e
-        self.logger.info("Calling Method")
         try:
+            self.logger.info(f"Calling method: {self.method_name}")
             self.logger.debug(
                 "Calling Method: {} with parameters {} {}".format(
                     self.method_name, inputs, self.params
@@ -142,7 +139,6 @@ class PipelineMethod:
             raise e
 
         if self.write:
-            self.logger.info("Writing outputs")
             self.logger.debug("Writing outputs: {}".format(outputs))
             if self.data_target is not None:
                 is_spark = True if spark is not None else False
@@ -187,7 +183,7 @@ class PipelineMethod:
                         spark=spark,
                     )
                     self.logger.debug("Writing output: {}".format(outputs))
-                self.logger.info("Finished writing outputs Method run complete")
+                self.logger.debug("Finished writing outputs Method run complete")
             crawl(
                 crawler_name=crawler_name,
                 environment=environment,
@@ -195,7 +191,7 @@ class PipelineMethod:
                 survey=survey,
             )
         else:
-            self.logger.info("Returning outputs dataframe")
+            self.logger.debug("Returning outputs dataframe")
             return outputs
 
 
@@ -230,18 +226,15 @@ class Pipeline:
         :param run_id: Current run_id to be passed to logger
         :param survey: Current running survey to be passed to spp logger
         """
-        try:
-            self.logger = general_functions.get_logger(
-                survey, current_module, environment, run_id
-            )
-        except Exception as e:
-            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger = general_functions.get_logger(
+            survey, current_module, environment, run_id
+        )
         self.logger.info("Initializing Pipeline")
         self.name = name
         self.platform = platform
         self.run_id = run_id
         if is_spark:
-            self.logger.info("Starting Spark Session for APP {}".format(name))
+            self.logger.debug("Starting Spark Session for APP {}".format(name))
             from pyspark.sql import SparkSession
 
             self.spark = SparkSession.builder.appName(name).getOrCreate()
@@ -275,7 +268,7 @@ class Pipeline:
         :param write: Whether or not to write the data - Boolean
         :return:
         """
-        self.logger.info("Adding Method to Pipeline")
+        self.logger.info(f"Adding Method to Pipeline: {name}")
         self.logger.debug(
             "Adding Method: {} , from Module {}, With parameters {}, "
             "retrieving data from {}, writing to {}.".format(
@@ -356,12 +349,9 @@ class Pipeline:
 
 def construct_pipeline(config, survey):
 
-    try:
-        logger = general_functions.get_logger(
-            survey, current_module, config["environment"], config["run_id"]
-        )
-    except Exception as e:
-        raise Exception("{}:Exception raised: {}".format(current_module, e))
+    logger = general_functions.get_logger(
+        survey, current_module, config["environment"], config["run_id"]
+    )
 
     logger.info(
         "Constructing pipeline with name {}, platform {}, is_spark {}".format(
