@@ -9,22 +9,14 @@ def write_pandasDf_to_s3(df, data_target, environment, run_id, survey):
     logger = general_functions.get_logger(survey, current_module,
                                           environment, run_id)
 
-    logger.debug(("Pandas write to {}. Partition_by : "
-                  + str(data_target['partition_by']) + ". Save mode : "
-                  + str(data_target['save_mode'])).format(data_target['location']))
+    logger.debug(f"Pandas write data target {repr(data_target)}")
 
     import awswrangler as wr
     wr.s3.to_parquet(df=df, path=data_target['location'],
                      compression='snappy', dataset=True,
                      partition_cols=data_target['partition_by'],
                      mode=str(data_target['save_mode']).lower())
-
-    # Approach 3 with awswrangler version 1.0.4 end
-
     logger.debug("Pandas write completed.")
-
-    return
-
 
 def write_sparkDf_to_s3(df, data_target, environment, run_id, survey):
     from pyspark.context import SparkContext
@@ -33,16 +25,10 @@ def write_sparkDf_to_s3(df, data_target, environment, run_id, survey):
 
     logger = general_functions.get_logger(survey, current_module,
                                           environment, run_id)
-
+    logger.debug(f"Writing spark dataframe to {repr{data_target)}")
     glueContext = GlueContext(SparkContext.getOrCreate())
-    logger.debug('Inside write_sparkDf_to_s3 :: Created glueContext')
     dynamic_df_out = DynamicFrame.fromDF(df, glueContext, "dynamic_df_out")
-    logger.debug('Inside write_sparkDf_to_s3 :: '
-                 'Convert spark df to dynamic df completed ... ')
-    logger.debug('Inside write_sparkDf_to_s3 ::  '
-                 'partition :: string : ' + str(data_target['partition_by']))
-    logger.debug('Inside write_sparkDf_to_s3 :: '
-                 'writing to location ' + data_target['location'])
+
     block_size = 128 * 1024 * 1024
     page_size = 1024 * 1024
     glueContext.write_dynamic_frame.from_options(
@@ -53,5 +39,4 @@ def write_sparkDf_to_s3(df, data_target, environment, run_id, survey):
         format="glueparquet",
         format_options={"compression": "snappy",
                         "blockSize": block_size, "pageSize": page_size})
-    logger.debug('Inside write_sparkDf_to_s3 :: completed.')
-    return
+    logger.debug("write complete")
