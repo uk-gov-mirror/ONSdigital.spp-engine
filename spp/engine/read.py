@@ -104,22 +104,13 @@ def _get_file_format(location):
 
 def _db_log(query, reader, environment,
             run_id, survey):
-    try:
-        logger = general_functions.get_logger(survey, current_module,
+    logger = general_functions.get_logger(survey, current_module,
                                               environment, run_id)
-    except Exception as e:
-        raise Exception("{}:Exception raised: {}".format(current_module, e))
-    logger.info("Reading from database")
-    logger.info(f"Query: {query}")
-    logger.info(f"Reader: {reader}")
+    logger.debug(f"Reading from database, query: {query} reader: {reader}")
 
 
 def _file_log(path, environment, run_id,
               survey):
-    try:
-        logger = general_functions.get_logger(survey, current_module,
+    logger = general_functions.get_logger(survey, current_module,
                                               environment, run_id)
-    except Exception as e:
-        raise Exception("{}:Exception raised: {}".format(current_module, e))
-    logger.info("Reading from file")
-    logger.info(f"Location: {path}")
+    logger.debug(f"Reading from file {path}")
