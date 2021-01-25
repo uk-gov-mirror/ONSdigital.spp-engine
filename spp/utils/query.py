@@ -19,11 +19,8 @@ class Query:
             Optional where expects a map of format
             {"column_name": {"condition": value, "value": value}}
         """
-        try:
-            self.logger = general_functions.get_logger(survey, current_module,
-                                                       environment, run_id)
-        except Exception as e:
-            raise Exception("{}:Exception raised: {}".format(current_module, e))
+        self.logger = general_functions.get_logger(survey, current_module,
+                                                   environment, run_id)
         self.database = database
         self.table = table
         self.select = select
@@ -63,8 +60,8 @@ class Query:
                     if whr["value"] == 'previous':
                         whr["value"] = self.run_id
                     whr["value"] = "'" + whr["value"] + "'"
-                self.logger.info("Inside spp_engine :: query :: handle_where :  ")
-                self.logger.info(str(where_conds))
+                self.logger.debug("Inside spp_engine :: query :: handle_where :  ")
+                self.logger.debug(str(where_conds))
                 clause_list.append("{} {} {}".format(whr["column"],
                                                      whr["condition"],
                                                      str(whr["value"])))
@@ -81,6 +78,6 @@ class Query:
         where_clause = self._handle_where(where)
         if where_clause is not None:
             tmp += " WHERE {}".format(where_clause)
-        self.logger.info("Inside spp_engine :: query :: _formulate_query :  ")
-        self.logger.info(tmp)
+        self.logger.debug("Inside spp_engine :: query :: _formulate_query :  ")
+        self.logger.debug(tmp)
         self.query = tmp + ";"
