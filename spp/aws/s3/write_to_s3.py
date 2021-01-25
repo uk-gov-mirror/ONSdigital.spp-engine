@@ -25,7 +25,7 @@ def write_sparkDf_to_s3(df, data_target, environment, run_id, survey):
 
     logger = general_functions.get_logger(survey, current_module,
                                           environment, run_id)
-    logger.debug(f"Writing spark dataframe to {repr{data_target)}")
+    logger.debug(f"Writing spark dataframe to {repr(data_target)}")
     glueContext = GlueContext(SparkContext.getOrCreate())
     dynamic_df_out = DynamicFrame.fromDF(df, glueContext, "dynamic_df_out")
 
