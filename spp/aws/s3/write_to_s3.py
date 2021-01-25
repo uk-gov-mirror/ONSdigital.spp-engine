@@ -38,11 +38,11 @@ def write_sparkDf_to_s3(df, data_target, environment, run_id, survey):
     logger.debug('Inside write_sparkDf_to_s3 :: Created glueContext')
     dynamic_df_out = DynamicFrame.fromDF(df, glueContext, "dynamic_df_out")
     logger.debug('Inside write_sparkDf_to_s3 :: '
-                'Convert spark df to dynamic df completed ... ')
+                 'Convert spark df to dynamic df completed ... ')
     logger.debug('Inside write_sparkDf_to_s3 ::  '
-                'partition :: string : ' + str(data_target['partition_by']))
+                 'partition :: string : ' + str(data_target['partition_by']))
     logger.debug('Inside write_sparkDf_to_s3 :: '
-                'writing to location ' + data_target['location'])
+                 'writing to location ' + data_target['location'])
     block_size = 128 * 1024 * 1024
     page_size = 1024 * 1024
     glueContext.write_dynamic_frame.from_options(
