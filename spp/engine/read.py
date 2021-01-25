@@ -8,7 +8,7 @@ current_module = "SPP Engine - Read"
 class PandasReader:
     def read_db(self, query, **kwargs):
         """ To be implemented by child classes """
-        raise NotImplementedError('Abstract method.')
+        raise NotImplementedError("Abstract method.")
 
     def read_file(self, path, **kwargs):
         """
@@ -18,11 +18,12 @@ class PandasReader:
         :param path: String representing file path
         :returns Pandas DataFrame:
         """
-        return getattr(importlib.import_module('pandas'),
-                       "read_{}".format(_get_file_format(path)))(path, **kwargs)
+        return getattr(
+            importlib.import_module("pandas"), "read_{}".format(_get_file_format(path))
+        )(path, **kwargs)
 
     def __repr__(self):
-        return 'PandasReader'
+        return "PandasReader"
 
 
 class PandasAthenaReader(PandasReader):
@@ -34,15 +35,15 @@ class PandasAthenaReader(PandasReader):
         """
         import awswrangler as wr
 
-        return wr.athena.read_sql_query(sql=str(query)[:-1],
-                                        database=query.database, **kwargs)
+        return wr.athena.read_sql_query(
+            sql=str(query)[:-1], database=query.database, **kwargs
+        )
 
     def __repr__(self):
-        return 'PandasAthenaReader'
+        return "PandasAthenaReader"
 
 
-def pandas_read(cursor, environment, run_id,
-                survey, reader=PandasReader(), **kwargs):
+def pandas_read(cursor, environment, run_id, survey, reader=PandasReader(), **kwargs):
     """
     Reads data into a DataFrame using Pandas. If the cursor is an SPP Query,
     a database is queried and a
@@ -58,12 +59,11 @@ def pandas_read(cursor, environment, run_id,
     """
     # If cursor looks like query
     if isinstance(cursor, Query):
-        _db_log(str(cursor), reader, environment,
-                run_id, survey)
+        _db_log(str(cursor), reader, environment, run_id, survey)
         if reader:
             return reader.read_db(cursor, **kwargs)
         else:
-            raise Exception('Cursor is query-like, but no reader object given')
+            raise Exception("Cursor is query-like, but no reader object given")
 
     # Otherwise, treat as file location
     else:
@@ -71,8 +71,7 @@ def pandas_read(cursor, environment, run_id,
         return reader.read_file(cursor, **kwargs)
 
 
-def spark_read(spark, cursor, environment,
-               run_id, survey, **kwargs):
+def spark_read(spark, cursor, environment, run_id, survey, **kwargs):
     """
     Reads data into a DataFrame using Spark. If the cursor is an SPP Query,
     the Spark metastore is used,
@@ -88,8 +87,7 @@ def spark_read(spark, cursor, environment,
 
     # If cursor looks like query
     if isinstance(cursor, Query):
-        _db_log(str(cursor)[:-1], spark, environment,
-                run_id, survey)
+        _db_log(str(cursor)[:-1], spark, environment, run_id, survey)
         return spark.sql(str(cursor)[:-1])
 
     # Otherwise, treat as file location
@@ -99,18 +97,14 @@ def spark_read(spark, cursor, environment,
 
 
 def _get_file_format(location):
-    return location.split('.')[-1]
+    return location.split(".")[-1]
 
 
-def _db_log(query, reader, environment,
-            run_id, survey):
-    logger = general_functions.get_logger(survey, current_module,
-                                              environment, run_id)
+def _db_log(query, reader, environment, run_id, survey):
+    logger = general_functions.get_logger(survey, current_module, environment, run_id)
     logger.debug(f"Reading from database, query: {query} reader: {reader}")
 
 
-def _file_log(path, environment, run_id,
-              survey):
-    logger = general_functions.get_logger(survey, current_module,
-                                              environment, run_id)
+def _file_log(path, environment, run_id, survey):
+    logger = general_functions.get_logger(survey, current_module, environment, run_id)
     logger.debug(f"Reading from file {path}")
