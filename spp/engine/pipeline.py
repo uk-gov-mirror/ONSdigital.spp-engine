@@ -57,7 +57,6 @@ class PipelineMethod:
         self.logger = general_functions.get_logger(
             survey, current_module, environment, run_id
         )
-        self.logger.info("Initializing Method")
         self.method_name = name
         self.module_name = module
         self.write = write
@@ -111,35 +110,13 @@ class PipelineMethod:
         inputs = {
             data.name: data.pipeline_read_data(platform, spark) for data in self.data_in
         }
-        self.logger.debug("Data Retrieved")
-        self.logger.debug("Retrieved data : {}".format(inputs))
-        self.logger.debug("Importing Module")
-        try:
-            module = importlib.import_module(self.module_name)
-            self.logger.debug("Imported {}".format(module))
-        except Exception as e:
-            self.logger.error("Cant import module {}".format(self.module_name))
-            raise e
-        try:
-            self.logger.info(f"Calling method: {self.method_name}")
-            self.logger.debug(
-                "Calling Method: {} with parameters {} {}".format(
-                    self.method_name, inputs, self.params
-                )
-            )
-            outputs = getattr(module, self.method_name)(**inputs, **self.params)
-        except TypeError as e:
-            self.logger.error("Incorrect Parameters for method called.")
-            raise e
-        except ValueError as e:
-            self.logger.error("Issue with getting parameter name.")
-            raise e
-        except Exception as e:
-            self.logger.error("Issue calling method")
-            raise e
+
+        self.logger.debug(f"Importing module {self.module_name}")
+        module = importlib.import_module(self.module_name)
+        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+        outputs = getattr(module, self.method_name)(**inputs, **self.params)
 
         if self.write:
-            self.logger.debug("Writing outputs: {}".format(outputs))
             if self.data_target is not None:
                 is_spark = True if spark is not None else False
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
@@ -163,7 +140,7 @@ class PipelineMethod:
                             spark=spark,
                             counter=count,
                         )
-                        self.logger.debug("Writing output: {}".format(output))
+
                 else:
                     outputs = isPartitionColumnExists(
                         outputs,
@@ -182,8 +159,7 @@ class PipelineMethod:
                         survey=survey,
                         spark=spark,
                     )
-                    self.logger.debug("Writing output: {}".format(outputs))
-                self.logger.debug("Finished writing outputs Method run complete")
+
             crawl(
                 crawler_name=crawler_name,
                 environment=environment,
@@ -191,7 +167,6 @@ class PipelineMethod:
                 survey=survey,
             )
         else:
-            self.logger.debug("Returning outputs dataframe")
             return outputs
 
 
@@ -268,11 +243,10 @@ class Pipeline:
         :param write: Whether or not to write the data - Boolean
         :return:
         """
-        self.logger.info(f"Adding Method to Pipeline: {name}")
         self.logger.debug(
             "Adding Method: {} , from Module {}, With parameters {}, "
             "retrieving data from {}, writing to {}.".format(
-                name, module, params, data_source, str(data_target)
+                name, module, params, data_source, repr(data_target)
             )
         )
         self.methods.append(
@@ -338,14 +312,11 @@ class Pipeline:
                 self.logger.info("Method Finished: {}".format(method.method_name))
 
             self.send_status("DONE", self.name)
-        except Exception as e:
-            general_functions.handle_exception(
-                exception=e,
-                module=self.name,
-                run_id=self.run_id,
-                bpm_queue_url=self.bpm_queue_url,
-            )
-
+        except Exception:
+            # The logger knows how to correctly extract the exception from
+            # sys.exc_info
+            self.logger.exception("Error running pipeline")
+            self.send_status("ERROR", self.name)
 
 def construct_pipeline(config, survey):
 
@@ -354,7 +325,7 @@ def construct_pipeline(config, survey):
     )
 
     logger.info(
-        "Constructing pipeline with name {}, platform {}, is_spark {}".format(
+        "Constructing pipeline with name {}, platform {}, using spark {}".format(
             config["name"], config["platform"], config["spark"]
         )
     )
@@ -369,14 +340,6 @@ def construct_pipeline(config, survey):
     )
 
     for method in config["methods"]:
-        logger.debug(
-            "Adding method with name {}, module {}, queries {}, params {}".format(
-                method["name"],
-                method["module"],
-                method["data_access"],
-                method["params"],
-            )
-        )
         if method["write"]:
             write_data_to = method["data_write"][0]
         else:
