@@ -318,6 +318,7 @@ class Pipeline:
             self.logger.exception("Error running pipeline")
             self.send_status("ERROR", self.name)
 
+
 def construct_pipeline(config, survey):
 
     logger = general_functions.get_logger(
