@@ -1,5 +1,5 @@
 from es_aws_functions import general_functions
-from spp.aws.s3.write_to_s3 import write_pandasDf_to_s3, write_sparkDf_to_s3
+from spp.aws.s3.write_to_s3 import write_pandas_df_to_s3, write_spark_df_to_s3
 
 current_module = "SPP Engine - Write"
 
@@ -21,11 +21,9 @@ def spark_write(df, data_target, counter,
     if isinstance(counter, int) & (counter >= 1):
         tmp_path = "/data" + str(counter)
     data_target['location'] = data_target['location'] + tmp_path
-    write_sparkDf_to_s3(df, data_target, environment, run_id, survey)
+    write_spark_df_to_s3(df, data_target, environment, run_id, survey)
     _write_log(data_target['location'], environment, run_id,
                survey)
-
-    return
 
 
 def pandas_write(df, data_target, environment,
@@ -39,9 +37,7 @@ def pandas_write(df, data_target, environment,
     :param run_id: Current run_id to pass to spp logger
     :param survey: Current running survey to pass to spp logger
     """
-    # import s3fs  # Leave this in to check optional dependency explicitly
-    # return getattr(df, "to_{}".format(_get_file_format(location)))(location, **kwargs)
-    write_pandasDf_to_s3(df, data_target, environment, run_id, survey)
+    write_pandas_df_to_s3(df, data_target, environment, run_id, survey)
     _write_log(data_target['location'], environment, run_id, survey)
 
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from spp.engine.data_access import write_data, DataAccess, isPartitionColumnExists
+from spp.engine.data_access import write_data, DataAccess, set_run_id
 import importlib
 from spp.aws.glue_crawler import crawl
 
@@ -64,9 +64,7 @@ class PipelineMethod:
         self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
-        self.__populateDataAccess(data_source, survey, environment, run_id)
 
-    def __populateDataAccess(self, data_source, survey, environment, run_id):
         for da in data_source:
             query = None
             if da.get("database") is not None:
@@ -116,13 +114,11 @@ class PipelineMethod:
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
                     for count, output in enumerate(outputs, start=1):
                         # (output, data_target, platform, spark=None,counter=None):
-                        output = isPartitionColumnExists(
+                        output = set_run_id(
                             output,
                             self.data_target["partition_by"],
                             str(self.run_id),
-                            is_spark,
-                            environment,
-                            survey,
+                            is_spark
                         )
                         write_data(
                             output=output,
@@ -132,17 +128,15 @@ class PipelineMethod:
                             run_id=run_id,
                             survey=survey,
                             spark=spark,
-                            counter=count,
+                            counter=count
                         )
 
                 else:
-                    outputs = isPartitionColumnExists(
+                    outputs = set_run_id(
                         outputs,
                         self.data_target["partition_by"],
                         str(self.run_id),
-                        is_spark,
-                        environment,
-                        survey,
+                        is_spark
                     )
                     write_data(
                         output=outputs,
@@ -151,14 +145,14 @@ class PipelineMethod:
                         environment=environment,
                         run_id=run_id,
                         survey=survey,
-                        spark=spark,
+                        spark=spark
                     )
 
             crawl(
                 crawler_name=crawler_name,
                 environment=environment,
                 run_id=run_id,
-                survey=survey,
+                survey=survey
             )
         else:
             return outputs
