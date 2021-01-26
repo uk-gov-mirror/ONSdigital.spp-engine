@@ -10,7 +10,6 @@ def test_spark_read_db(create_session):
     df.createOrReplaceGlobalTempView('view')
     assert read.spark_read(
         create_session, Query(database='global_temp', table='view',
-                              environment="sandbox", survey="BMI_SG",
                               select='*', run_id="fake_run_id"),
         "sandbox", "fake_run_id", "BMI_SG"
     ).collect() == df.collect()
@@ -40,8 +39,6 @@ def test_pandas_read_db(mock_instance_method):
     assert_frame_equal(
         read.pandas_read(Query(database='FAKEDB',
                                table='FAKETABLE',
-                               environment="sandbox",
-                               survey="BMI_SG",
                                select=['col1', 'col2'],
                                where='col1 = 1',
                                run_id="fake_run_id"),
@@ -59,8 +56,6 @@ def test_pandas_read_db_not_implemented():
         read.pandas_read(
             Query(database='FAKEDB',
                   table='FAKETABLE',
-                  environment="sandbox",
-                  survey="BMI_SG",
                   select=['col1', 'col2'],
                   where='col1 = 1',
                   run_id="fake_run_id"),
