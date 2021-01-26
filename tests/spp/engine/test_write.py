@@ -21,7 +21,7 @@ def test_spark_write_csv(write_to_s3, create_session):
     spark_write(df, test_target, counter=0, environment="sandbox",
                 run_id="fake_run_id", survey="BMI_SG")
     assert write_to_s3.call_args[0][1]['location'] == \
-           suite_location + "/test_spark_write_file.csv"
+        suite_location + "/test_spark_write_file.csv"
 
 
 @patch('spp.engine.write.write_sparkDf_to_s3')
