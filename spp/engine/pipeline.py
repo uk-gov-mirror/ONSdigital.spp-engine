@@ -68,6 +68,7 @@ class PipelineMethod:
 
     def __populateDataAccess(self, data_source, survey, environment, run_id):
         for da in data_source:
+            query = None
             if da.get("database") is not None:
                 query = Query(
                     database=da["database"],
@@ -78,8 +79,10 @@ class PipelineMethod:
                     where=da["where"],
                     run_id=self.run_id,
                 )
+
             else:
-                queery = da["path"]
+                query = da["path"]
+
             self.data_in.append(DataAccess(
                 da['name'],
                 query,
