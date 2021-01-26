@@ -67,31 +67,27 @@ class PipelineMethod:
         self.__populateDataAccess(data_source, survey, environment, run_id)
 
     def __populateDataAccess(self, data_source, survey, environment, run_id):
-        da_key = []
-        da_value = []
         for da in data_source:
-            da_key.append(da["name"])
-            tmp_sql = None
-            if ("database" in da) and (da["database"] is not None):
-                tmp_sql = Query(
+            query = None
+            if da.get("database") is not None:
+                query = Query(
                     database=da["database"],
                     table=da["table"],
                     select=da["select"],
                     where=da["where"],
                     run_id=self.run_id,
                 )
-            tmp_path = da["path"]
-            da_value.append({"sql": tmp_sql, "path": tmp_path})
-        data_source_tmp = dict(zip(da_key, da_value))
-        for d_name, d_info in data_source_tmp.items():
-            name = d_name
-            query = None
-            for key in d_info:
-                if query is None:
-                    query = d_info[key]
-                elif key == "sql":
-                    query = d_info[key]
-            self.data_in.append(DataAccess(name, query, survey, environment, run_id))
+
+            else:
+                query = da["path"]
+
+            self.data_in.append(DataAccess(
+                da['name'],
+                query,
+                survey,
+                environment,
+                run_id
+            ))
 
     def run(self, platform, crawler_name, survey, environment, run_id, spark=None):
         """
