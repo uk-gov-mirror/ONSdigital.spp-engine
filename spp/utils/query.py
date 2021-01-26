@@ -1,5 +1,3 @@
-from es_aws_functions import general_functions
-
 current_module = "SPP Engine - Query"
 
 
