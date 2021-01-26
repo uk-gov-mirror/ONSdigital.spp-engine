@@ -54,10 +54,6 @@ def _get_file_format(location):
 
 def _write_log(location, environment, run_id,
                survey):
-    try:
-        logger = general_functions.get_logger(survey, current_module,
-                                              environment, run_id)
-    except Exception as e:
-        raise Exception("{}:Exception raised: {}".format(current_module, e))
-    logger.info("Writing to file")
-    logger.info(f"Location: {location}")
+    logger = general_functions.get_logger(survey, current_module,
+                                          environment, run_id)
+    logger.debug(f"Writing to file location: {location}")

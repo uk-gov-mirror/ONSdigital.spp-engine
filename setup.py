@@ -1,26 +1,14 @@
 from setuptools import find_packages
+from setuptools import setup
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
-about = {}
-with open('./__about__.py') as fp:
-    exec(fp.read(), about)
-
-config = {
-    'description': 'Statistical Production Pipeline Engine',
-    'author': about["__author__"],
-    'author_email': about["__email__"],
-    'url': about["__gitrepo__"],
-    'download_url': about["__pkgrepo__"],
-    'version': about["__version__"],
-    'packages': find_packages(exclude=['tests']),
-    'scripts': [],
-    'name': 'spp_engine',
-    'install_requires': ['es_functions'],
-    'classifiers': []
-}
-
-setup(**config)
+setup(
+    description="Statistical Production Pipeline Engine",
+    author="SPP",
+    url="https://github.com/ONSdigital/spp-engine",
+    version="0.0.6",
+    packages=find_packages(exclude=["tests"]),
+    scripts=[],
+    name="spp_engine",
+    install_requires=["es_functions"],
+    classifiers=[],
+)
