@@ -118,7 +118,8 @@ class PipelineMethod:
                             output,
                             self.data_target["partition_by"],
                             str(self.run_id),
-                            is_spark                        )
+                            is_spark
+                        )
                         write_data(
                             output=output,
                             data_target=self.data_target,
@@ -127,7 +128,7 @@ class PipelineMethod:
                             run_id=run_id,
                             survey=survey,
                             spark=spark,
-                            counter=count,
+                            counter=count
                         )
 
                 else:
@@ -144,14 +145,14 @@ class PipelineMethod:
                         environment=environment,
                         run_id=run_id,
                         survey=survey,
-                        spark=spark,
+                        spark=spark
                     )
 
             crawl(
                 crawler_name=crawler_name,
                 environment=environment,
                 run_id=run_id,
-                survey=survey,
+                survey=survey
             )
         else:
             return outputs
