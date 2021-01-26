@@ -64,9 +64,7 @@ class PipelineMethod:
         self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
-        self.__populateDataAccess(data_source, survey, environment, run_id)
 
-    def __populateDataAccess(self, data_source, survey, environment, run_id):
         for da in data_source:
             query = None
             if da.get("database") is not None:
