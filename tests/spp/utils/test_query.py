@@ -14,21 +14,18 @@ def test_db_and_table():
     expected_query = "SELECT * FROM test.test;"
 
     assert expected_query == str(Query(database="test", table="test",
-                                       environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
 
 
 def test_db_table_single_select():
     expected_query = "SELECT column FROM test.test;"
     assert expected_query == str(Query(database="test", table="test",
-                                       environment="sandbox", survey="BMI_SG",
                                        select="column", run_id="fake_run_id"))
 
 
 def test_db_table_list_select():
     expected_query = "SELECT column_a, column_b FROM test.test;"
     assert expected_query == str(Query(database="test", table="test",
-                                       environment="sandbox", survey="BMI_SG",
                                        select=["column_a", "column_b"],
                                        run_id="fake_run_id"))
 
@@ -37,12 +34,11 @@ def test_db_table_single_where():
     expected_query = "SELECT * FROM test.test WHERE column == 500;"
     print(str(Query("test", "test", where={"column":
                                            {"condition": "==", "value": "500"}},
-                    environment="sandbox", survey="BMI_SG", run_id="fake_run_id")))
+                    run_id="fake_run_id")))
     print(expected_query)
     assert expected_query == str(Query("test", "test",
                                        where=[{"column": "column",
                                                "condition": "==", "value": "500"}],
-                                       environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
 
 
@@ -57,7 +53,6 @@ def test_db_table_list_where():
                                                "condition": "=", "value": "this"},
                                               {"column": "column_c",
                                                "condition": "<", "value": "100"}],
-                                       environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
 
 
@@ -66,7 +61,6 @@ def test_db_table_single_select_where():
     assert expected_query == str(Query("test", "test", select="column",
                                        where=[{"column": "column",
                                                "condition": "=", "value": "test"}],
-                                       environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
 
 
@@ -83,5 +77,4 @@ def test_db_table_list_select_where():
                                                "condition": ">", "value": "250"},
                                               {"column": "column_c",
                                                "condition": "<", "value": "500"}],
-                                       environment="sandbox", survey="BMI_SG",
                                        run_id="fake_run_id"))
