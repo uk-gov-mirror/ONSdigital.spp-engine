@@ -97,28 +97,19 @@ def write_data(output, data_target, platform,
         return
 
 
-def isPartitionColumnExists(df, list_partition_column, run_id, is_spark,
-                            environment, survey):
-    logger = general_functions.get_logger(survey, current_module,
-                                          environment, run_id)
-    logger.debug('isPartitionColumnExists :: start..')
+def set_run_id(df, list_partition_column, run_id, is_spark):
     if (df is not None) and (list_partition_column is not None) and is_spark:
         import pyspark.sql.functions as f
         columns = df.columns
         if 'run_id' not in columns:
-            logger.debug('inside spark run_id not exist')
             df = df.withColumn('run_id', f.lit(run_id))
         elif 'run_id' in columns:
-            logger.debug('inside spark run_id exist')
             df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
     elif (df is not None) and (list_partition_column is not None) and not is_spark:
         columns = list(df.columns)
         if 'run_id' not in columns:
-            logger.debug('inside pandas run_id not exist')
             df['run_id'] = run_id
         elif 'run_id' in columns:
-            logger.debug('inside pandas run_id exist')
             df = df.drop(columns=['run_id'])
             df['run_id'] = run_id
-    logger.debug('isPartitionColumnExists :: end..')
     return df

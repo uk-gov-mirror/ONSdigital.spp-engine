@@ -1,5 +1,5 @@
 from enum import Enum
-from spp.engine.data_access import write_data, DataAccess, isPartitionColumnExists
+from spp.engine.data_access import write_data, DataAccess, set_run_id
 import importlib
 from spp.aws.glue_crawler import crawl
 
@@ -114,14 +114,11 @@ class PipelineMethod:
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
                     for count, output in enumerate(outputs, start=1):
                         # (output, data_target, platform, spark=None,counter=None):
-                        output = isPartitionColumnExists(
+                        output = set_run_id(
                             output,
                             self.data_target["partition_by"],
                             str(self.run_id),
-                            is_spark,
-                            environment,
-                            survey,
-                        )
+                            is_spark                        )
                         write_data(
                             output=output,
                             data_target=self.data_target,
@@ -134,13 +131,11 @@ class PipelineMethod:
                         )
 
                 else:
-                    outputs = isPartitionColumnExists(
+                    outputs = set_run_id(
                         outputs,
                         self.data_target["partition_by"],
                         str(self.run_id),
-                        is_spark,
-                        environment,
-                        survey,
+                        is_spark
                     )
                     write_data(
                         output=outputs,
