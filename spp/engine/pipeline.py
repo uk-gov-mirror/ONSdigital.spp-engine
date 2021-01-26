@@ -76,8 +76,6 @@ class PipelineMethod:
                 tmp_sql = Query(
                     database=da["database"],
                     table=da["table"],
-                    environment=environment,
-                    survey=survey,
                     select=da["select"],
                     where=da["where"],
                     run_id=self.run_id,

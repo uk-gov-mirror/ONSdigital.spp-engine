@@ -1,5 +1,3 @@
-from es_aws_functions import general_functions
-
 current_module = "SPP Engine - Query"
 
 
@@ -12,15 +10,13 @@ class Query:
     query = ''
     run_id = None
 
-    def __init__(self, database, table, environment, survey,
-                 select=None, where=None, run_id=None):
+    def __init__(self, database, table, select=None,
+                 where=None, run_id=None):
         """ Constructor for the Query class takes
             database and table optional for select which can be string or list
             Optional where expects a map of format
             {"column_name": {"condition": value, "value": value}}
         """
-        self.logger = general_functions.get_logger(survey, current_module,
-                                                   environment, run_id)
         self.database = database
         self.table = table
         self.select = select
@@ -60,8 +56,6 @@ class Query:
                     if whr["value"] == 'previous':
                         whr["value"] = self.run_id
                     whr["value"] = "'" + whr["value"] + "'"
-                self.logger.debug("Inside spp_engine :: query :: handle_where :  ")
-                self.logger.debug(str(where_conds))
                 clause_list.append("{} {} {}".format(whr["column"],
                                                      whr["condition"],
                                                      str(whr["value"])))
@@ -78,6 +72,4 @@ class Query:
         where_clause = self._handle_where(where)
         if where_clause is not None:
             tmp += " WHERE {}".format(where_clause)
-        self.logger.debug("Inside spp_engine :: query :: _formulate_query :  ")
-        self.logger.debug(tmp)
         self.query = tmp + ";"
