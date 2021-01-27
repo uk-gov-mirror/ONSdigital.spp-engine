@@ -1,12 +1,8 @@
-from es_aws_functions import general_functions
-
 current_module = "SPP Engine - Write to S3"
 
 
-def write_pandas_df_to_s3(df, data_target, environment, run_id, survey):
+def write_pandas_df_to_s3(df, data_target, logger):
     # input_datafame,partition_cols,bucket_name=None, filepath=None, format=None):
-
-    logger = general_functions.get_logger(survey, current_module, environment, run_id)
 
     logger.debug(f"Pandas write data target {repr(data_target)}")
 
@@ -23,12 +19,11 @@ def write_pandas_df_to_s3(df, data_target, environment, run_id, survey):
     logger.debug("Pandas write completed.")
 
 
-def write_spark_df_to_s3(df, data_target, environment, run_id, survey):
+def write_spark_df_to_s3(df, data_target, logger):
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
     from awsglue.dynamicframe import DynamicFrame
 
-    logger = general_functions.get_logger(survey, current_module, environment, run_id)
     logger.debug(f"Writing spark dataframe to {repr(data_target)}")
     glue_context = GlueContext(SparkContext.getOrCreate())
     dynamic_df_out = DynamicFrame.fromDF(df, glue_context, "dynamic_df_out")
