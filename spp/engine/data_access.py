@@ -10,7 +10,7 @@ class DataAccess:
     whether it is utilising Apache Spark or is a pure python project
     """
 
-    def __init__(self, name, query, run_id, logger):
+    def __init__(self, name, query, logger):
         """
         Takes in the Query object that is used to access the data
         :param name: String
@@ -20,7 +20,6 @@ class DataAccess:
         :return:
         """
         self.logger = logger
-        self.run_id = run_id
         self.logger.debug("Initializing DataAccess")
         self.query = query
         self.name = name
@@ -34,54 +33,45 @@ class DataAccess:
         :param spark: SparkSession
         :return:
         """
-        self.logger.debug("DataAccess: read data using : {}".format(self.query))
+        self.logger.debug("DataAccess: Read data using: {}".format(self.query))
 
         if spark is not None:
-            self.logger.debug("DataAccess: read data into spark dataframe")
-            return spark_read(environment=self.environment, run_id=self.run_id,
-                              survey=self.survey, spark=spark, cursor=self.query)
+            self.logger.debug("DataAccess: Read data into spark dataframe")
+            return spark_read(logger=self.logger, spark=spark, cursor=self.query)
         else:
             if (platform == spp.engine.pipeline.Platform.AWS.value) & \
                     (isinstance(self.query, Query)):
-                self.logger.debug("DataAccess: read data into pandas dataframe")
-                return pandas_read(cursor=self.query, environment=self.environment,
-                                   run_id=self.run_id, survey=self.survey,
+                self.logger.debug("DataAccess: Read data into pandas dataframe")
+                return pandas_read(cursor=self.query, logger=self.logger,
                                    reader=PandasAthenaReader())
             else:
-                self.logger.debug("DataAccess: read data into pandas dataframe")
-                return pandas_read(cursor=self.query, environment=self.environment,
-                                   run_id=self.run_id, survey=self.survey)
+                self.logger.debug("DataAccess: Read data into pandas dataframe")
+                return pandas_read(cursor=self.query, logger=self.logger)
 
 
-def write_data(output, data_target, platform,
-               environment, run_id, survey,
+def write_data(output, data_target, platform, logger,
                spark=None, counter=0):
     """
     This method may be removed as further requirements
     determine whether this should be a generic function
     :param data_target: target location
-    :param environment: Environment name for logger
+    :param logger: Logger object
     :param output: Dataframe
     :param platform: Platform
-    :param run_id: Run_id name for logger
     :param spark: SparkSession
-    :param survey: Survey name for logger
     :return:
     """
-    logger = general_functions.get_logger(survey, current_module,
-                                          environment, run_id)
-    logger.debug("DataAccess: write data: ")
+    logger.debug("DataAccess: Write data:")
     if spark is not None:
-        logger.debug("DataAccess: write spark dataframe")
+        logger.debug("DataAccess: Write spark dataframe")
         spark_write(df=output, data_target=data_target, counter=counter,
-                    environment=environment, run_id=run_id, survey=survey)
-        logger.debug("DataAccess: written spark dataframe successfully")
+                    logger=logger)
+        logger.debug("DataAccess: Written spark dataframe successfully")
         return
     else:
-        logger.debug("DataAccess: write pandas dataframe")
-        pandas_write(df=output, data_target=data_target,
-                     environment=environment, run_id=run_id, survey=survey)
-        logger.debug("DataAccess: written pandas dataframe successfully")
+        logger.debug("DataAccess: Write pandas dataframe")
+        pandas_write(df=output, data_target=data_target, logger=logger)
+        logger.debug("DataAccess: Written pandas dataframe successfully")
         return
 
 
