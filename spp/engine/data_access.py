@@ -3,10 +3,6 @@ from spp.engine.write import spark_write, pandas_write
 from spp.utils.query import Query
 import spp.engine.pipeline
 from es_aws_functions import general_functions
-
-current_module = "DataAccess"
-
-
 class DataAccess:
     """
     Wrapper that calls the differing Data Access methods depending on
@@ -14,25 +10,17 @@ class DataAccess:
     whether it is utilising Apache Spark or is a pure python project
     """
 
-    query = None
-    name = None
-
-    def __init__(self, name, query, survey,
-                 environment, run_id):
+    def __init__(self, name, query, run_id, logger):
         """
         Takes in the Query object that is used to access the data
-        :param environment: Current running environment to pass to spp logger
         :param name: String
         :param query: spp.utils.query.Query
         :param run_id: Current run_id to pass to spp logger
-        :param survey: Current running survey to pass to spp logger
+        :param logger: logger to use
         :return:
         """
-        self.environment = environment
+        self.logger = logger
         self.run_id = run_id
-        self.survey = survey
-        self.logger = general_functions.get_logger(self.survey, current_module,
-                                                   self.environment, self.run_id)
         self.logger.debug("Initializing DataAccess")
         self.query = query
         self.name = name
