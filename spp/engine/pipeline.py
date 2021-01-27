@@ -1,4 +1,5 @@
 from enum import Enum
+from pyspark.sql import SparkSession
 from spp.engine.data_access import write_data, DataAccess, set_run_id
 import importlib
 from spp.aws.glue_crawler import crawl
@@ -136,7 +137,7 @@ class PipelineMethod:
 
             crawl(
                 crawler_name=crawler_name,
-                logger
+                logger=logger
             )
         else:
             return outputs
@@ -170,9 +171,11 @@ class Pipeline:
         self.run_id = run_id
         if is_spark:
             self.logger.debug("Starting Spark Session for APP {}".format(name))
-            from pyspark.sql import SparkSession
-
             self.spark = SparkSession.builder.appName(name).getOrCreate()
+
+        else:
+            self.spark = None
+
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
