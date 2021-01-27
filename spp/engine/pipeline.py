@@ -192,7 +192,6 @@ class Pipeline:
         self.logger = general_functions.get_logger(
             survey, current_module, environment, run_id
         )
-        self.logger.info("Initializing Pipeline")
         self.name = name
         self.platform = platform
         self.run_id = run_id
@@ -282,7 +281,6 @@ class Pipeline:
         :param survey: Current running survey to pass to spp logger
         :return:
         """
-        self.logger.info("Running Pipeline: {}".format(self.name))
         self.send_status("IN PROGRESS", self.name)
         try:
             for method_num, method in enumerate(self.methods):
