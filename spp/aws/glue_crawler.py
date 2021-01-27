@@ -1,6 +1,7 @@
 import boto3
 import time
 
+
 def crawl(crawler_name, logger):
     logger.debug("crawler : {}".format(crawler_name)+" starts..")
     client = boto3.client('glue', region_name='eu-west-2')
