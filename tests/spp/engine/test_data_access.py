@@ -1,8 +1,10 @@
 from unittest.mock import patch
-from spp.engine.data_access import DataAccess
-from spp.utils.query import Query
+
 import pandas as pd
 from es_aws_functions import general_functions
+
+from spp.engine.data_access import DataAccess
+from spp.utils.query import Query
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")

@@ -1,5 +1,6 @@
-from spp.utils.query import Query
 import importlib
+
+from spp.utils.query import Query
 
 current_module = "SPP Engine - Read"
 

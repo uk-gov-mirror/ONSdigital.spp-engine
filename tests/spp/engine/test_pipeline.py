@@ -10,12 +10,14 @@
 # 9.  Add methods to the pipeline
 # 10. Run the pipeline
 
-from unittest.mock import patch, PropertyMock
-from spp.engine.pipeline import PipelineMethod, Pipeline
-from pyspark.sql.types import StructField, StructType, StringType, \
-    IntegerType, BooleanType
+from unittest.mock import PropertyMock, patch
+
 import pandas as pd
 from es_aws_functions import general_functions
+
+from pyspark.sql.types import (BooleanType, IntegerType, StringType, StructField,
+                               StructType)
+from spp.engine.pipeline import Pipeline, PipelineMethod
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")

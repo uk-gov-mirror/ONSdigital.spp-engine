@@ -1,9 +1,11 @@
-from spp.engine.write import spark_write, pandas_write
-import pandas as pd
 import os
 import tempfile
 from unittest.mock import patch
+
+import pandas as pd
 from es_aws_functions import general_functions
+
+from spp.engine.write import pandas_write, spark_write
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")

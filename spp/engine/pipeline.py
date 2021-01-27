@@ -1,10 +1,12 @@
-from pyspark.sql import SparkSession
-from spp.engine.data_access import write_data, DataAccess, set_run_id
 import importlib
-from spp.aws.glue_crawler import crawl
-from spp.utils.query import Query
+import time
 
+import boto3
 from es_aws_functions import aws_functions, general_functions
+
+from pyspark.sql import SparkSession
+from spp.engine.data_access import DataAccess, set_run_id, write_data
+from spp.utils.query import Query
 
 current_module = "SPP-Engine - Pipeline"
 
@@ -288,3 +290,13 @@ def construct_pipeline(config, survey):
         )
 
     return pipeline
+
+
+def crawl(crawler_name, logger):
+    logger.debug("crawler : {}".format(crawler_name)+" starts..")
+    client = boto3.client('glue', region_name='eu-west-2')
+    client.start_crawler(Name=crawler_name)
+    while client.get_crawler(Name=crawler_name)['Crawler']['State'] in \
+            ["RUNNING", "STOPPING"]:
+        time.sleep(10)
+    logger.debug("crawler : {}".format(crawler_name)+" completed")
