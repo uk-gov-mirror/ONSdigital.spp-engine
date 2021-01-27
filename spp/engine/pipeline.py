@@ -78,20 +78,14 @@ class PipelineMethod:
             self.data_in.append(DataAccess(
                 da['name'],
                 query,
-                survey,
-                environment,
-                run_id
+                logger
             ))
 
-    def run(self, platform, crawler_name, survey, environment, run_id, spark=None):
+    def run(self, platform, crawler_name, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
         :param crawler_name: Name of the glue crawler
-        :param environment: Current running survey to be passed to spp logger
-        :param platform: The platform the code is running on, most likely AWS
-        :param run_id: Current run_id to be passed to spp logger
         :param spark: SparkSession builder
-        :param survey: Current running survey to be passed to spp logger
         :return:
         """
         self.logger.debug("Retrieving data")
@@ -120,9 +114,7 @@ class PipelineMethod:
                             output=output,
                             data_target=self.data_target,
                             platform=platform,
-                            environment=environment,
-                            run_id=run_id,
-                            survey=survey,
+                            logger=logger,
                             spark=spark,
                             counter=count
                         )
@@ -138,21 +130,16 @@ class PipelineMethod:
                         output=outputs,
                         data_target=self.data_target,
                         platform=platform,
-                        environment=environment,
-                        run_id=run_id,
-                        survey=survey,
+                        logger=logger,
                         spark=spark
                     )
 
             crawl(
                 crawler_name=crawler_name,
-                environment=environment,
-                run_id=run_id,
-                survey=survey
+                logger
             )
         else:
             return outputs
-
 
 class Pipeline:
     """
