@@ -1,6 +1,8 @@
-import pytest
-from pyspark.sql import SparkSession
 import os
+
+import pytest
+
+from pyspark.sql import SparkSession
 
 
 @pytest.fixture(scope="session")

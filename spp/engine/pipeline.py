@@ -1,23 +1,14 @@
-from enum import Enum
-from pyspark.sql import SparkSession
-from spp.engine.data_access import write_data, DataAccess, set_run_id
 import importlib
-from spp.aws.glue_crawler import crawl
+import time
 
-from spp.utils.query import Query
-
+import boto3
 from es_aws_functions import aws_functions, general_functions
 
+from pyspark.sql import SparkSession
+from spp.engine.data_access import DataAccess, set_run_id, write_data
+from spp.utils.query import Query
+
 current_module = "SPP-Engine - Pipeline"
-
-
-class Platform(Enum):
-    """
-    Enum that indicates which platform the Pipeline
-    will run on currently only AWS but planned are GCP and Azure
-    """
-
-    AWS = "AWS"
 
 
 class PipelineMethod:
@@ -77,7 +68,7 @@ class PipelineMethod:
                 logger
             ))
 
-    def run(self, platform, crawler_name, spark=None):
+    def run(self, crawler_name, spark=None):
         """
         Will import the method and call it.  It will then write out the outputs
         :param crawler_name: Name of the glue crawler
@@ -86,7 +77,7 @@ class PipelineMethod:
         """
         self.logger.debug("Retrieving data")
         inputs = {
-            data.name: data.pipeline_read_data(platform, spark) for data in self.data_in
+            data.name: data.pipeline_read_data(spark) for data in self.data_in
         }
 
         self.logger.debug(f"Importing module {self.module_name}")
@@ -99,7 +90,7 @@ class PipelineMethod:
                 is_spark = True if spark is not None else False
                 if isinstance(outputs, list) or isinstance(outputs, tuple):
                     for count, output in enumerate(outputs, start=1):
-                        # (output, data_target, platform, spark=None,counter=None):
+                        # (output, data_target, spark=None,counter=None):
                         output = set_run_id(
                             output,
                             self.data_target["partition_by"],
@@ -109,7 +100,6 @@ class PipelineMethod:
                         write_data(
                             output=output,
                             data_target=self.data_target,
-                            platform=platform,
                             logger=self.logger,
                             spark=spark,
                             counter=count
@@ -125,7 +115,6 @@ class PipelineMethod:
                     write_data(
                         output=outputs,
                         data_target=self.data_target,
-                        platform=platform,
                         logger=self.logger,
                         spark=spark
                     )
@@ -137,6 +126,7 @@ class PipelineMethod:
         else:
             return outputs
 
+
 class Pipeline:
     """
     Wrapper to contain the pipeline methods and enable their calling
@@ -147,7 +137,6 @@ class Pipeline:
         name,
         run_id,
         logger,
-        platform=Platform.AWS,
         is_spark=False,
         bpm_queue_url=None
     ):
@@ -156,13 +145,11 @@ class Pipeline:
         :param bpm_queue_url: String or None if there is no queue to send status to
         :param is_spark: Boolean
         :param name: Name of pipeline run
-        :param platform: Platform
         :param run_id: Current run id
         :param logger: the logger to use
         """
         self.logger = logger
         self.name = name
-        self.platform = platform
         self.run_id = run_id
         if is_spark:
             self.logger.debug("Starting Spark Session for APP {}".format(name))
@@ -237,11 +224,10 @@ class Pipeline:
             total_steps=len(self.methods),
         )
 
-    def run(self, platform, crawler_name):
+    def run(self, crawler_name):
         """
         Runs the methods of the pipeline
         :param crawler_name: Name of glue crawler to run for each method
-        :param platform: Platform
         :param survey: Current running survey to pass to spp logger
         :return:
         """
@@ -256,7 +242,7 @@ class Pipeline:
                     "IN PROGRESS", method.method_name, current_step_num=step_num
                 )
                 method.run(
-                    platform, crawler_name, self.spark
+                    crawler_name, self.spark
                 )
                 self.send_status("DONE", method.method_name, current_step_num=step_num)
                 self.logger.info("Method Finished: {}".format(method.method_name))
@@ -276,15 +262,14 @@ def construct_pipeline(config, survey):
     )
 
     logger.info(
-        "Constructing pipeline with name {}, platform {}, using spark {}".format(
-            config["name"], config["platform"], config["spark"]
+        "Constructing pipeline with name {}, using spark {}".format(
+            config["name"], config["spark"]
         )
     )
     pipeline = Pipeline(
         name=config["name"],
         run_id=config["run_id"],
         logger=logger,
-        platform=config["platform"],
         is_spark=config["spark"],
         bpm_queue_url=config.get("bpm_queue_url")
     )
@@ -305,3 +290,13 @@ def construct_pipeline(config, survey):
         )
 
     return pipeline
+
+
+def crawl(crawler_name, logger):
+    logger.debug("crawler : {}".format(crawler_name)+" starts..")
+    client = boto3.client('glue', region_name='eu-west-2')
+    client.start_crawler(Name=crawler_name)
+    while client.get_crawler(Name=crawler_name)['Crawler']['State'] in \
+            ["RUNNING", "STOPPING"]:
+        time.sleep(10)
+    logger.debug("crawler : {}".format(crawler_name)+" completed")

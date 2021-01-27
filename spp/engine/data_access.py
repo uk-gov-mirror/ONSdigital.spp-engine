@@ -1,12 +1,11 @@
-from spp.engine.read import spark_read, pandas_read, PandasAthenaReader
-from spp.engine.write import spark_write, pandas_write
-from spp.utils.query import Query
-import spp.engine.pipeline
-from es_aws_functions import general_functions
+from spp.engine.read import PandasAthenaReader, pandas_read, spark_read
+from spp.engine.write import pandas_write, spark_write
+
+
 class DataAccess:
     """
     Wrapper that calls the differing Data Access methods depending on
-    the platform that the pipeline is running on and
+    the *** that the pipeline is running on and
     whether it is utilising Apache Spark or is a pure python project
     """
 
@@ -24,12 +23,11 @@ class DataAccess:
         self.query = query
         self.name = name
 
-    def pipeline_read_data(self, platform, spark=None):
+    def pipeline_read_data(self, spark=None):
         """
         Will call the specific data retrieval method depending
-        on the Platform and whether it is spark or not
+        on the *** and whether it is spark or not
         using the query supplies when instantiation the class.
-        :param platform: Platform
         :param spark: SparkSession
         :return:
         """
@@ -39,17 +37,12 @@ class DataAccess:
             self.logger.debug("DataAccess: Read data into spark dataframe")
             return spark_read(logger=self.logger, spark=spark, cursor=self.query)
         else:
-            if (platform == spp.engine.pipeline.Platform.AWS.value) & \
-                    (isinstance(self.query, Query)):
-                self.logger.debug("DataAccess: Read data into pandas dataframe")
-                return pandas_read(cursor=self.query, logger=self.logger,
-                                   reader=PandasAthenaReader())
-            else:
-                self.logger.debug("DataAccess: Read data into pandas dataframe")
-                return pandas_read(cursor=self.query, logger=self.logger)
+            self.logger.debug("DataAccess: Read data into pandas dataframe")
+            return pandas_read(cursor=self.query, logger=self.logger,
+                               reader=PandasAthenaReader())
 
 
-def write_data(output, data_target, platform, logger,
+def write_data(output, data_target, logger,
                spark=None, counter=0):
     """
     This method may be removed as further requirements
@@ -57,7 +50,6 @@ def write_data(output, data_target, platform, logger,
     :param data_target: target location
     :param logger: Logger object
     :param output: Dataframe
-    :param platform: Platform
     :param spark: SparkSession
     :return:
     """

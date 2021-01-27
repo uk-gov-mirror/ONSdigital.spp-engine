@@ -2,7 +2,6 @@
   "pipeline": {
     "name": "test_pipeline",
     "spark": true,
-    "platform": "AWS",
     "run_id": "000001",
     "environment": "sandbox",
     "methods": [{

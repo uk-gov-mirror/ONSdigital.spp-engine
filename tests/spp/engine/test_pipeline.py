@@ -10,13 +10,14 @@
 # 9.  Add methods to the pipeline
 # 10. Run the pipeline
 
-from unittest.mock import patch, PropertyMock
-from spp.engine.pipeline import PipelineMethod, Pipeline
-from pyspark.sql.types import StructField, StructType, StringType, \
-    IntegerType, BooleanType
+from unittest.mock import PropertyMock, patch
+
 import pandas as pd
-import spp.engine.pipeline as p_module
 from es_aws_functions import general_functions
+
+from pyspark.sql.types import (BooleanType, IntegerType, StringType, StructField,
+                               StructType)
+from spp.engine.pipeline import Pipeline, PipelineMethod
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")
@@ -50,7 +51,8 @@ def test_aws_small_method(mock_class, mock_method, mock_crawl):
                                  logger,
                                  {"param_1": 0, "param_2": 1, "param_3": 3})
 
-    test_method.run(p_module.Platform.AWS, "test_crawler")
+    test_method.run("test_crawler")
+
 
 @patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
@@ -70,7 +72,7 @@ def test_aws_big_method(mock_class, mock_method, crawl, create_session):
 
     mock_class().pipeline_read_data.return_value = sdf
     test_method = PipelineMethod("RSI_20200520_15141987", "method_a",
-                                  "tests.test_methods.bd.big_data",
+                                 "tests.test_methods.bd.big_data",
                                  [{"name": "df", "database": "test_db",
                                    "table": "test_table",
                                    "path": "dummy.json",
@@ -88,7 +90,8 @@ def test_aws_big_method(mock_class, mock_method, crawl, create_session):
                                  {"param_1": "col_1", "param_2": "col_2",
                                   "param_3": "col_3"})
 
-    test_method.run(p_module.Platform.AWS, "test-crawler", create_session)
+    test_method.run("test-crawler", create_session)
+
 
 @patch('spp.engine.pipeline.crawl')
 @patch('spp.engine.pipeline.write_data')
@@ -110,8 +113,7 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", "000001", logger,
-                             p_module.Platform.AWS, False)
+    test_pipeline = Pipeline("Test", "000001", logger, False)
 
     test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_c",
                                        "tests.test_methods.sd.small_data",
@@ -154,7 +156,7 @@ def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
                                        {"param_1": "reporting_date",
                                         "param_2": "entity_name"})
 
-    test_pipeline.run(p_module.Platform.AWS, "test-crawler")
+    test_pipeline.run("test-crawler")
 
 
 @patch('spp.engine.pipeline.crawl')
@@ -196,8 +198,7 @@ def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
     type(mock_class()).name = PropertyMock(side_effect=df_names)
     mock_class().pipeline_read_data.side_effect = dfs
 
-    test_pipeline = Pipeline("Test", "000001", logger,
-                             p_module.Platform.AWS, True)
+    test_pipeline = Pipeline("Test", "000001", logger, True)
 
     test_pipeline.add_pipeline_methods("run_id", "method_a",
                                        "tests.test_methods.bd.big_data",
@@ -238,4 +239,4 @@ def test_aws_big_pipeline(mock_class, mock_method, mock_crawl, create_session):
                                        }, True,
                                        {"param_1": "reporting_date",
                                         "param_2": "entity_name"})
-    test_pipeline.run(platform=p_module.Platform.AWS, crawler_name="test-crawler")
+    test_pipeline.run(crawler_name="test-crawler")

@@ -2,7 +2,6 @@
   "pipeline": {
     "name": "test_sd_pipeline",
     "spark": false,
-    "platform": "AWS",
     "run_id": "000002",
     "environment": "sandbox",
     "methods": [{

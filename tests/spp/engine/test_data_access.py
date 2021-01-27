@@ -1,9 +1,10 @@
 from unittest.mock import patch
-import spp.engine.pipeline
-from spp.engine.data_access import DataAccess
-from spp.utils.query import Query
+
 import pandas as pd
 from es_aws_functions import general_functions
+
+from spp.engine.data_access import DataAccess
+from spp.utils.query import Query
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")
@@ -23,7 +24,7 @@ def test_aws_big_pipeline_read_data_1(mock_spark_read, mock_pandas_read, create_
         ),
         logger=logger
     )
-    data_access.pipeline_read_data(spp.engine.pipeline.Platform.AWS, create_session)
+    data_access.pipeline_read_data(create_session)
     assert mock_spark_read.called
     assert not mock_pandas_read.called
 
@@ -36,7 +37,7 @@ def test_aws_big_pipeline_read_data_2(mock_spark_read, mock_pandas_read, create_
         query="s3://BUCKET_NAME/PATH-TO-INPUT-DATA/",
         logger=logger
     )
-    data_access.pipeline_read_data(spp.engine.pipeline.Platform.AWS, create_session)
+    data_access.pipeline_read_data(create_session)
     assert mock_spark_read.called
     assert not mock_pandas_read.called
 
@@ -49,7 +50,7 @@ def test_aws_small_pipeline_read_data_1(mock_spark_read, mock_pandas_read):
         query="s3://BUCKET_NAME/PATH-TO-INPUT-DATA/",
         logger=logger
     )
-    data_access.pipeline_read_data(spp.engine.pipeline.Platform.AWS)
+    data_access.pipeline_read_data()
     assert not mock_spark_read.called
     assert mock_pandas_read.called
 
@@ -68,7 +69,7 @@ def test_aws_small_pipeline_read_data_2(mock_spark_read, mock_pandas_athena):
         ),
         logger=logger
     )
-    data_access.pipeline_read_data(spp.engine.pipeline.Platform.AWS.value)
+    data_access.pipeline_read_data()
     mock_pandas_athena.return_value = pd.DataFrame({"old_col": pd.Series([2])})
     assert not mock_spark_read.called
     assert mock_pandas_athena.called
