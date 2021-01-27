@@ -26,11 +26,6 @@ class PipelineMethod:
     that will be called as part of a pipeline
     """
 
-    module_name = None
-    method_name = None
-    params = None
-    data_in = None
-
     def __init__(
         self,
         run_id,
@@ -115,7 +110,7 @@ class PipelineMethod:
                             output=output,
                             data_target=self.data_target,
                             platform=platform,
-                            logger=logger,
+                            logger=self.logger,
                             spark=spark,
                             counter=count
                         )
@@ -131,13 +126,13 @@ class PipelineMethod:
                         output=outputs,
                         data_target=self.data_target,
                         platform=platform,
-                        logger=logger,
+                        logger=self.logger,
                         spark=spark
                     )
 
             crawl(
                 crawler_name=crawler_name,
-                logger=logger
+                logger=self.logger
             )
         else:
             return outputs
@@ -242,13 +237,11 @@ class Pipeline:
             total_steps=len(self.methods),
         )
 
-    def run(self, platform, crawler_name, survey, environment, run_id):
+    def run(self, platform, crawler_name):
         """
         Runs the methods of the pipeline
         :param crawler_name: Name of glue crawler to run for each method
-        :param environment: Current running environment to pass to spp logger
         :param platform: Platform
-        :param run_id: Current run_id to pass to spp logger
         :param survey: Current running survey to pass to spp logger
         :return:
         """
@@ -263,7 +256,7 @@ class Pipeline:
                     "IN PROGRESS", method.method_name, current_step_num=step_num
                 )
                 method.run(
-                    platform, crawler_name, survey, environment, run_id, self.spark
+                    platform, crawler_name, self.spark
                 )
                 self.send_status("DONE", method.method_name, current_step_num=step_num)
                 self.logger.info("Method Finished: {}".format(method.method_name))
