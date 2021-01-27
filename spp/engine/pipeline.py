@@ -38,25 +38,21 @@ class PipelineMethod:
         data_source,
         data_target,
         write,
-        environment,
-        survey,
-        params=None,
+        logger,
+        params=None
     ):
         """
         Initialise the attributes of the class
         :param data_source: list of Dict[String, Dict]
         :param data_target: target location
-        :param environment: Current running environment to pass to logger
         :param module: Method module name
         :param name: Method name
         :param params: Dict[String, Any]
-        :param run_id: Current run_id to pass on to spp logger
-        :param survey: Current running survey to pass to logger
+        :param run_id: Current run_id for query
         :param write: Boolean of whether to write results to location
+        :param logger: logger to use
         """
-        self.logger = general_functions.get_logger(
-            survey, current_module, environment, run_id
-        )
+        self.logger = logger
         self.method_name = name
         self.module_name = module
         self.write = write
@@ -163,35 +159,25 @@ class Pipeline:
     Wrapper to contain the pipeline methods and enable their calling
     """
 
-    platform = None
-    name = None
-    methods = None
-    spark = None
-    run_id = None
-
     def __init__(
         self,
         name,
         run_id,
-        environment,
-        survey,
+        logger,
         platform=Platform.AWS,
         is_spark=False,
-        bpm_queue_url=None,
+        bpm_queue_url=None
     ):
         """
         Initialises the attributes of the class.
         :param bpm_queue_url: String or None if there is no queue to send status to
-        :param environment: Current running environment to be passed to spp logger
         :param is_spark: Boolean
         :param name: Name of pipeline run
         :param platform: Platform
-        :param run_id: Current run_id to be passed to logger
-        :param survey: Current running survey to be passed to spp logger
+        :param run_id: Current run id
+        :param logger: the logger to use
         """
-        self.logger = general_functions.get_logger(
-            survey, current_module, environment, run_id
-        )
+        self.logger = logger
         self.name = name
         self.platform = platform
         self.run_id = run_id
@@ -200,7 +186,6 @@ class Pipeline:
             from pyspark.sql import SparkSession
 
             self.spark = SparkSession.builder.appName(name).getOrCreate()
-            # self. spark.conf.set("spark.sql.parquet.mergeSchema", "true")
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
@@ -212,22 +197,19 @@ class Pipeline:
         data_source,
         data_target,
         write,
-        params,
-        environment,
-        survey,
+        params
     ):
         """
         Adds a new method to the pipeline
         :param data_source: list of Dict[String, Dict]
         :param data_target: dictionary of string related to write.such as location,
         format and partition column.
-        :param environment: Current running environment to pass to spp logger
         :param module: Method module name from config
         :param name: Method name from config
         :param params: Dict[String, Any]
         :param run_id: run_id - String
-        :param survey: Current running survey to pass to spp logger
         :param write: Whether or not to write the data - Boolean
+        :param logger: logger to use
         :return:
         """
         self.logger.debug(
@@ -244,9 +226,8 @@ class Pipeline:
                 data_source,
                 data_target,
                 write,
-                environment,
-                survey,
-                params,
+                self.logger,
+                params
             )
         )
 
@@ -319,11 +300,10 @@ def construct_pipeline(config, survey):
     pipeline = Pipeline(
         name=config["name"],
         run_id=config["run_id"],
+        logger=logger,
         platform=config["platform"],
         is_spark=config["spark"],
-        bpm_queue_url=config.get("bpm_queue_url"),
-        environment=config["environment"],
-        survey=survey,
+        bpm_queue_url=config.get("bpm_queue_url")
     )
 
     for method in config["methods"]:
@@ -338,9 +318,7 @@ def construct_pipeline(config, survey):
             data_source=method["data_access"],
             data_target=write_data_to,
             write=method["write"],
-            params=method["params"][0],
-            environment=config["environment"],
-            survey=survey,
+            params=method["params"][0]
         )
 
     return pipeline
