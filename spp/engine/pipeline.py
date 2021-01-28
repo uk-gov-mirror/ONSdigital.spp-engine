@@ -81,14 +81,14 @@ class PipelineMethod:
                             output,
                             self.data_target["partition_by"],
                             str(self.run_id),
-                            is_spark,
+                            is_spark
                         )
                         write_data(
                             output=output,
                             data_target=self.data_target,
                             logger=self.logger,
                             spark=spark,
-                            counter=count,
+                            counter=count
                         )
 
                 else:
@@ -96,13 +96,13 @@ class PipelineMethod:
                         outputs,
                         self.data_target["partition_by"],
                         str(self.run_id),
-                        is_spark,
+                        is_spark
                     )
                     write_data(
                         output=outputs,
                         data_target=self.data_target,
                         logger=self.logger,
-                        spark=spark,
+                        spark=spark
                     )
 
             crawl(crawler_name=crawler_name, logger=self.logger)
@@ -168,7 +168,7 @@ class Pipeline:
                 data_target,
                 write,
                 self.logger,
-                params,
+                params
             )
         )
 
@@ -228,7 +228,8 @@ def construct_pipeline(config, survey=None, logger=None):
             config.get("survey", survey),
             current_module,
             config["environment"],
-            config["run_id"],
+
+            config["run_id"]
         )
 
     logger.info(
@@ -241,7 +242,7 @@ def construct_pipeline(config, survey=None, logger=None):
         run_id=config["run_id"],
         logger=logger,
         is_spark=config["spark"],
-        bpm_queue_url=config.get("bpm_queue_url"),
+        bpm_queue_url=config.get("bpm_queue_url")
     )
 
     for method in config["methods"]:
@@ -256,7 +257,7 @@ def construct_pipeline(config, survey=None, logger=None):
             data_source=method["data_access"],
             data_target=write_data_to,
             write=method["write"],
-            params=method["params"][0],
+            params=method["params"][0]
         )
 
     return pipeline
@@ -268,7 +269,7 @@ def crawl(crawler_name, logger):
     client.start_crawler(Name=crawler_name)
     while client.get_crawler(Name=crawler_name)["Crawler"]["State"] in [
         "RUNNING",
-        "STOPPING",
+        "STOPPING"
     ]:
         time.sleep(10)
     logger.debug("crawler : {}".format(crawler_name) + " completed")
