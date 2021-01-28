@@ -1,13 +1,17 @@
 # parse json data
 # validate json data
-# mock data access
-# check pipeline runs
-
 
 import json
-
+from es_aws_functions import general_functions
 from pyspark.sql import SparkSession
 from spp.engine.pipeline import construct_pipeline
+
+logger = general_functions.get_logger(
+    survey="rsi",
+    module_name="SPP Engine - construct_pipeline",
+    environment="sandbox",
+    run_id="1111.2222"
+)
 
 with open("./tests/resources/config/test_bd_pipeline.json") as f:
     test_bd_json = json.load(f)
@@ -17,7 +21,7 @@ with open("./tests/resources/config/test_sd_pipeline.json") as f:
 
 
 def test_parse_config_bd():
-    pipeline = construct_pipeline(test_bd_json['pipeline'], "BMI_SG")
+    pipeline = construct_pipeline(test_bd_json['pipeline'], logger)
 
     assert pipeline.name == 'test_pipeline'
     assert isinstance(pipeline.spark, SparkSession)
@@ -41,7 +45,7 @@ def test_parse_config_bd():
 
 
 def test_parse_config_sd():
-    pipeline = construct_pipeline(test_sd_json['pipeline'], "BMI_SG")
+    pipeline = construct_pipeline(test_sd_json['pipeline'], logger)
 
     assert pipeline.name == 'test_sd_pipeline'
     assert not pipeline.spark
