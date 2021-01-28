@@ -18,15 +18,7 @@ class PipelineMethod:
     """
 
     def __init__(
-        self,
-        run_id,
-        name,
-        module,
-        data_source,
-        data_target,
-        write,
-        logger,
-        params=None
+        self, run_id, name, module, data_source, data_target, write, logger, params=None
     ):
         """
         Initialise the attributes of the class
@@ -62,11 +54,7 @@ class PipelineMethod:
             else:
                 query = da["path"]
 
-            self.data_in.append(DataAccess(
-                da['name'],
-                query,
-                logger
-            ))
+            self.data_in.append(DataAccess(da["name"], query, logger))
 
     def run(self, crawler_name, spark=None):
         """
@@ -76,9 +64,7 @@ class PipelineMethod:
         :return:
         """
         self.logger.debug("Retrieving data")
-        inputs = {
-            data.name: data.pipeline_read_data(spark) for data in self.data_in
-        }
+        inputs = {data.name: data.pipeline_read_data(spark) for data in self.data_in}
 
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
@@ -119,10 +105,7 @@ class PipelineMethod:
                         spark=spark
                     )
 
-            crawl(
-                crawler_name=crawler_name,
-                logger=self.logger
-            )
+            crawl(crawler_name=crawler_name, logger=self.logger)
         else:
             return outputs
 
@@ -132,14 +115,7 @@ class Pipeline:
     Wrapper to contain the pipeline methods and enable their calling
     """
 
-    def __init__(
-        self,
-        name,
-        run_id,
-        logger,
-        is_spark=False,
-        bpm_queue_url=None
-    ):
+    def __init__(self, name, run_id, logger, is_spark=False, bpm_queue_url=None):
         """
         Initialises the attributes of the class.
         :param bpm_queue_url: String or None if there is no queue to send status to
@@ -162,14 +138,7 @@ class Pipeline:
         self.methods = []
 
     def add_pipeline_methods(
-        self,
-        run_id,
-        name,
-        module,
-        data_source,
-        data_target,
-        write,
-        params
+        self, run_id, name, module, data_source, data_target, write, params
     ):
         """
         Adds a new method to the pipeline
@@ -241,9 +210,7 @@ class Pipeline:
                 self.send_status(
                     "IN PROGRESS", method.method_name, current_step_num=step_num
                 )
-                method.run(
-                    crawler_name, self.spark
-                )
+                method.run(crawler_name, self.spark)
                 self.send_status("DONE", method.method_name, current_step_num=step_num)
                 self.logger.info("Method Finished: {}".format(method.method_name))
 
@@ -255,11 +222,15 @@ class Pipeline:
             self.send_status("ERROR", self.name)
 
 
-def construct_pipeline(config, survey):
+def construct_pipeline(config, survey=None, logger=None):
+    if logger is None:
+        logger = general_functions.get_logger(
+            config.get("survey", survey),
+            current_module,
+            config["environment"],
 
-    logger = general_functions.get_logger(
-        survey, current_module, config["environment"], config["run_id"]
-    )
+            config["run_id"]
+        )
 
     logger.info(
         "Constructing pipeline with name {}, using spark {}".format(
@@ -293,10 +264,12 @@ def construct_pipeline(config, survey):
 
 
 def crawl(crawler_name, logger):
-    logger.debug("crawler : {}".format(crawler_name)+" starts..")
-    client = boto3.client('glue', region_name='eu-west-2')
+    logger.debug("crawler : {}".format(crawler_name) + " starts..")
+    client = boto3.client("glue", region_name="eu-west-2")
     client.start_crawler(Name=crawler_name)
-    while client.get_crawler(Name=crawler_name)['Crawler']['State'] in \
-            ["RUNNING", "STOPPING"]:
+    while client.get_crawler(Name=crawler_name)["Crawler"]["State"] in [
+        "RUNNING",
+        "STOPPING"
+    ]:
         time.sleep(10)
-    logger.debug("crawler : {}".format(crawler_name)+" completed")
+    logger.debug("crawler : {}".format(crawler_name) + " completed")
