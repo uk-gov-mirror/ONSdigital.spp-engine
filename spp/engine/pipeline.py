@@ -2,7 +2,7 @@ import importlib
 import time
 
 import boto3
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import aws_functions
 
 from pyspark.sql import SparkSession
 from spp.engine.data_access import DataAccess, set_run_id, write_data
