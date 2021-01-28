@@ -256,12 +256,9 @@ class Pipeline:
 
 
 def construct_pipeline(config, survey=None, logger=None):
-    if survey is None:
-        survey = config['survey']
-
     if logger is None:
         logger = general_functions.get_logger(
-            survey, current_module, config["environment"], config["run_id"]
+            config.get('survey', survey), current_module, config["environment"], config["run_id"]
         )
 
     logger.info(
