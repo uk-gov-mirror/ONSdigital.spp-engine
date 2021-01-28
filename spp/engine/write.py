@@ -1,5 +1,3 @@
-import awswrangler as wr
-
 current_module = "SPP Engine - Write"
 
 
@@ -34,6 +32,7 @@ def pandas_write(df, data_target, logger, **kwargs):
 
 
 def write_pandas_df_to_s3(df, data_target, logger):
+    import awswrangler as wr
 
     logger.debug(f"Pandas write data target {repr(data_target)}")
 
