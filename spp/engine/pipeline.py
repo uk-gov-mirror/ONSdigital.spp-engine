@@ -255,11 +255,14 @@ class Pipeline:
             self.send_status("ERROR", self.name)
 
 
-def construct_pipeline(config, survey):
+def construct_pipeline(config, survey=None, logger=None):
+    if survey is None:
+        survey = config['survey']
 
-    logger = general_functions.get_logger(
-        survey, current_module, config["environment"], config["run_id"]
-    )
+    if logger is None:
+        logger = general_functions.get_logger(
+            survey, current_module, config["environment"], config["run_id"]
+        )
 
     logger.info(
         "Constructing pipeline with name {}, using spark {}".format(
