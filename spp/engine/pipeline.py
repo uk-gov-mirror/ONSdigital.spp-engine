@@ -2,7 +2,7 @@ import importlib
 import time
 
 import boto3
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import aws_functions
 
 from pyspark.sql import SparkSession
 from spp.engine.data_access import DataAccess, set_run_id, write_data
@@ -222,16 +222,7 @@ class Pipeline:
             self.send_status("ERROR", self.name)
 
 
-def construct_pipeline(config, survey=None, logger=None):
-    if logger is None:
-        logger = general_functions.get_logger(
-            config.get("survey", survey),
-            current_module,
-            config["environment"],
-
-            config["run_id"]
-        )
-
+def construct_pipeline(config, logger):
     logger.info(
         "Constructing pipeline with name {}, using spark {}".format(
             config["name"], config["spark"]
