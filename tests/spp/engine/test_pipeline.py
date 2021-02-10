@@ -12,7 +12,6 @@
 
 from unittest.mock import PropertyMock, patch
 
-import pandas as pd
 from es_aws_functions import general_functions
 
 from pyspark.sql.types import (BooleanType, IntegerType, StringType, StructField,
@@ -21,37 +20,6 @@ from spp.engine.pipeline import Pipeline, PipelineMethod
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")
-
-
-@patch('spp.engine.pipeline.crawl')
-@patch('spp.engine.pipeline.write_data')
-@patch('spp.engine.pipeline.DataAccess')
-def test_aws_small_method(mock_class, mock_method, mock_crawl):
-    mock_method.return_value("Data has been written out")
-    mock_class.return_value.name = "df"
-    mock_class().\
-        pipeline_read_data.\
-        return_value = pd.DataFrame({"old_col": pd.Series([2])})
-
-    test_method = PipelineMethod("RSI_20200520_15141987", "method_c",
-                                 "tests.test_methods.sd.small_data",
-                                 [{"name": "df", "database": "test_db",
-                                   "table": "test_table",
-                                   "path": "dummy.json",
-                                   "select": ["column_1", "column_2"],
-                                   "where": [{"column": "run_id",
-                                              "condition": "=", "value": "previous"}]}],
-                                 {
-                                     "location": "s3://dtrades-assets/workflows",
-                                     "format": "parquet",
-                                     "save_mode": "append",
-                                     "partition_by": ["run_id"]
-                                 },
-                                 True,
-                                 logger,
-                                 {"param_1": 0, "param_2": 1, "param_3": 3})
-
-    test_method.run("test_crawler")
 
 
 @patch('spp.engine.pipeline.crawl')
@@ -91,72 +59,6 @@ def test_aws_big_method(mock_class, mock_method, crawl, create_session):
                                   "param_3": "col_3"})
 
     test_method.run("test-crawler", create_session)
-
-
-@patch('spp.engine.pipeline.crawl')
-@patch('spp.engine.pipeline.write_data')
-@patch('spp.engine.pipeline.DataAccess')
-def test_aws_small_pipeline(mock_class, mock_method, mock_crawl):
-    df_names = ["df", "df_1", "df_2"]
-    dfs = [pd.DataFrame({"old_col": pd.Series([1])}),
-           pd.DataFrame({"reporting_date": pd.Series(["201602", "201603", "201604"]),
-                         "entity_name":
-                             pd.Series(["test_name", "not_test_name", "test_name"]),
-                         'value': pd.Series([1000] * 3)}),
-           pd.DataFrame({"reporting_date": pd.Series(["201602", "201603"]),
-                         "entity_name": pd.Series(["test_name",
-                                                   "not_test_name"]),
-                         "valid": pd.Series([True, False])}
-                        )]
-
-    mock_method.return_value("Data has been written out")
-    type(mock_class()).name = PropertyMock(side_effect=df_names)
-    mock_class().pipeline_read_data.side_effect = dfs
-
-    test_pipeline = Pipeline("Test", "000001", logger, False)
-
-    test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_c",
-                                       "tests.test_methods.sd.small_data",
-                                       [{"name": "df", "database": "test_db",
-                                         "table": "test_table",
-                                         "path": "dummy.json",
-                                         "select": ["column_1", "column_2"],
-                                         "where": [{"column": "run_id",
-                                                    "condition": "=",
-                                                    "value": "previous"}]}],
-                                       {
-                                           "location": "s3://dtrades-assets/workflows",
-                                           "format": "parquet",
-                                           "save_mode": "append",
-                                           "partition_by": ["run_id"]
-                                       }, True,
-                                       {"param_1": 0, "param_2": 1, "param_3": 3})
-
-    test_pipeline.add_pipeline_methods("RSI_20200520_15141987", "method_d",
-                                       "tests.test_methods.sd.small_data",
-                                       [{"name": "df_1", "path": "dummy.json",
-                                         "database": "test_db_1",
-                                         "table": "test_table_1",
-                                         "select": ["column_1", "column_2"],
-                                         "where": [{"column": "run_id",
-                                                    "condition": "=",
-                                                    "value": "RSI_20200418_12121586"}]},
-                                        {"name": "df_2", "path": "dummy2.json",
-                                         "database": "test_db_2",
-                                         "table": "test_table_2",
-                                         "select": ["column_1", "column_2"],
-                                         "where": [{"column": "column_1",
-                                                    "condition": "<", "value": 202020}]}],
-                                       {
-                                           "location": "s3://dtrades-assets/workflows",
-                                           "format": "parquet",
-                                           "save_mode": "append",
-                                           "partition_by": ["run_id"]
-                                       }, True,
-                                       {"param_1": "reporting_date",
-                                        "param_2": "entity_name"})
-
-    test_pipeline.run("test-crawler")
 
 
 @patch('spp.engine.pipeline.crawl')
