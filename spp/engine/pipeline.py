@@ -36,21 +36,18 @@ class PipelineMethod:
         self.params = params
         self.run_id = run_id
         self.data_target = data_target
-        if data_source:
-            # legacy config was a list of dictionaries but dsml can only ever
-            # handle one with the name of df
-            da = data_source[0]
-            query = None
-            # all params are now mandatory
-            query = Query(
-                database=da["database"],
-                table=da["table"],
-                select=da["select"],
-                where=da["where"],
-                run_id=self.run_id,
-            )
 
-            self.data_access = DataAccess(da["name"], query, logger)
+        # legacy config was a list of dictionaries but dsml can only ever
+        # handle one with the name of df
+        da = data_source[0]
+        # all params are now mandatory
+        self.query = Query(
+            database=da["database"],
+            table=da["table"],
+            select=da["select"],
+            where=da["where"],
+            run_id=self.run_id,
+        )
 
     def run(self, crawler_name, spark):
         """
@@ -61,7 +58,7 @@ class PipelineMethod:
         :return:
         """
         self.logger.debug("Retrieving data")
-        df = self.data_access.pipeline_read_data(spark)
+        df = spark.sql(str(self.query))
 
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
@@ -184,35 +181,6 @@ class Pipeline:
             # sys.exc_info
             self.logger.exception("Error running pipeline")
             self.send_status("ERROR", self.name)
-
-
-class DataAccess:
-    """
-    Wrapper that calls the spark_read method
-    """
-
-    def __init__(self, name, query, logger):
-        """
-        Takes in the Query object that is used to access the data
-        :param name: String
-        :param query: spp.utils.query.Query
-        :param run_id: Current run_id to pass to spp logger
-        :param logger: logger to use
-        :return:
-        """
-        self.logger = logger
-        self.logger.debug("Initializing DataAccess")
-        self.query = query
-        self.name = name
-
-    def pipeline_read_data(self, spark):
-        """
-        Call spark.sql with a query
-        :param spark: SparkSession
-        :return:
-        """
-        self.logger.debug("DataAccess: Read data using: {}".format(self.query))
-        return spark.sql(str(self.query))
 
 
 def write_data(output, data_target, logger, spark):
