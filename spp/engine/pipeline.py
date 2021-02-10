@@ -311,8 +311,7 @@ def construct_pipeline(config, logger):
     pipeline = Pipeline(
         name=config["name"],
         run_id=config["run_id"],
-        logger=logger,
-        is_spark=config["spark"],
+        logger=logger,        is_spark=config["spark"],
         bpm_queue_url=config.get("bpm_queue_url"),
     )
 
