@@ -90,11 +90,10 @@ class Pipeline:
     Wrapper to contain the pipeline methods and enable their calling
     """
 
-    def __init__(self, name, run_id, logger, is_spark=False, bpm_queue_url=None):
+    def __init__(self, name, run_id, logger, bpm_queue_url=None):
         """
         Initialises the attributes of the class.
         :param bpm_queue_url: String or None if there is no queue to send status to
-        :param is_spark: Boolean
         :param name: Name of pipeline run
         :param run_id: Current run id
         :param logger: the logger to use
@@ -102,13 +101,8 @@ class Pipeline:
         self.logger = logger
         self.name = name
         self.run_id = run_id
-        if is_spark:
-            self.logger.debug("Starting Spark Session for APP {}".format(name))
-            self.spark = SparkSession.builder.appName(name).getOrCreate()
-
-        else:
-            self.spark = None
-
+        self.logger.debug("Starting Spark Session for APP {}".format(name))
+        self.spark = SparkSession.builder.appName(name).getOrCreate()
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
