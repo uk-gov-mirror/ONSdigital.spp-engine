@@ -50,6 +50,10 @@ def write_data(output, data_target, logger,
         logger.debug("DataAccess: Written spark dataframe successfully")
 
 def set_run_id(df, list_partition_column, run_id, is_spark):
+    '''The purpose of this function is to set the run id in a way which
+    means that you have no idea whether the input was correct.
+    Of course if you don't pass a list for your partition column 
+    (which is entirely ignored otherwise) the function does nothing'''
     if (df is not None) and (list_partition_column is not None) and is_spark:
         import pyspark.sql.functions as f
         columns = df.columns
