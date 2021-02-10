@@ -8,6 +8,7 @@ from pyspark.sql import SparkSession
 
 current_module = "SPP-Engine - Pipeline"
 
+
 class PipelineMethod:
     """
     Wrapper that contains the metadata for a pipeline method
@@ -70,13 +71,13 @@ class PipelineMethod:
 
         if self.write:
             if self.data_target is not None:
-                    outputs = set_run_id(outputs, str(self.run_id))
-                    write_data(
-                        output=outputs,
-                        data_target=self.data_target,
-                        logger=self.logger,
-                        spark=spark
-                    )
+                outputs = set_run_id(outputs, str(self.run_id))
+                write_data(
+                    output=outputs,
+                    data_target=self.data_target,
+                    logger=self.logger,
+                    spark=spark,
+                )
 
             crawl(crawler_name=crawler_name, logger=self.logger)
 
@@ -142,7 +143,7 @@ class Pipeline:
                 data_target,
                 write,
                 self.logger,
-                params
+                params,
             )
         )
 
@@ -225,10 +226,10 @@ class DataAccess:
 
         if spark is not None:
             self.logger.debug("DataAccess: Read data into spark dataframe")
-            return spark_read(logger=self.logger, spark=spark, cursor=self.query)
+            return spark.sql(str(self.query))
 
-def write_data(output, data_target, logger,
-               spark=None, counter=0):
+
+def write_data(output, data_target, logger, spark=None, counter=0):
     """
     This method may be removed as further requirements
     determine whether this should be a generic function
@@ -241,22 +242,23 @@ def write_data(output, data_target, logger,
     logger.debug("DataAccess: Write data:")
     if spark is not None:
         logger.debug("DataAccess: Write spark dataframe")
-        spark_write(df=output, data_target=data_target, counter=counter,
-                    logger=logger)
+        spark_write(df=output, data_target=data_target, counter=counter, logger=logger)
         logger.debug("DataAccess: Written spark dataframe successfully")
 
+
 def set_run_id(df, run_id):
-    '''
+    """
     The purpose of this function is to set the run id in a way which
     means that you have no idea whether the input was correct.
-    '''
+    """
     if df is not None:
         import pyspark.sql.functions as f
-        columns = df.columns
-        if 'run_id' in columns:
-            df = df.drop('run_id')
 
-        df = df.withColumn('run_id', f.lit(run_id))
+        columns = df.columns
+        if "run_id" in columns:
+            df = df.drop("run_id")
+
+        df = df.withColumn("run_id", f.lit(run_id))
     return df
 
 
@@ -270,12 +272,12 @@ def spark_write(df, data_target, counter, logger, **kwargs):
     :param logger:
     :param kwargs: Other keyword arguments to pass to df.write.save()
     """
-    tmp_path = ''
+    tmp_path = ""
     if isinstance(counter, int) & (counter >= 1):
         tmp_path = "/data" + str(counter)
-    data_target['location'] = data_target['location'] + tmp_path
+    data_target["location"] = data_target["location"] + tmp_path
     write_spark_df_to_s3(df, data_target, logger=logger)
-    logger.debug("Writing to file location: " + data_target['location'])
+    logger.debug("Writing to file location: " + data_target["location"])
 
 
 def write_spark_df_to_s3(df, data_target, logger):
@@ -305,28 +307,6 @@ def write_spark_df_to_s3(df, data_target, logger):
     )
     logger.debug("write complete")
 
-def spark_read(spark, cursor, logger, **kwargs):
-    """
-    Reads data into a DataFrame using Spark. If the cursor is an SPP Query,
-    the Spark metastore is used,
-    otherwise the cursor is treated like a file path.
-    :param cursor: Query instance or file path String
-    :param kwargs: Other keyword arguments to pass to spark.read.load()
-    :param logger: SPP logger object to pass to logger functions
-    :param spark: Spark session
-    :returns Spark DataFrame:
-    """
-
-    # If cursor looks like query
-    if isinstance(cursor, Query):
-        logger.debug(f"Reading from database, query: {str(cursor)[:-1]} reader: {spark}")
-        return spark.sql(str(cursor)[:-1])
-
-    # Otherwise, treat as file location
-    else:
-        logger.debug(f"Reading from file {cursor}")
-        return spark.read.load(cursor, format=_get_file_format(cursor), **kwargs)
-
 
 def construct_pipeline(config, logger):
     logger.info(
@@ -339,7 +319,7 @@ def construct_pipeline(config, logger):
         run_id=config["run_id"],
         logger=logger,
         is_spark=config["spark"],
-        bpm_queue_url=config.get("bpm_queue_url")
+        bpm_queue_url=config.get("bpm_queue_url"),
     )
 
     for method in config["methods"]:
@@ -354,7 +334,7 @@ def construct_pipeline(config, logger):
             data_source=method["data_access"],
             data_target=write_data_to,
             write=method["write"],
-            params=method["params"][0]
+            params=method["params"][0],
         )
 
     return pipeline
@@ -366,22 +346,23 @@ def crawl(crawler_name, logger):
     client.start_crawler(Name=crawler_name)
     while client.get_crawler(Name=crawler_name)["Crawler"]["State"] in [
         "RUNNING",
-        "STOPPING"
+        "STOPPING",
     ]:
         time.sleep(10)
     logger.debug("crawler : {}".format(crawler_name) + " completed")
+
+
 current_module = "SPP Engine - Query"
 
 
 class Query:
     """ Class to create a SQL Query string from the input parameters. """
 
-    def __init__(self, database, table, select=None,
-                 where=None, run_id=None):
-        """ Constructor for the Query class takes
-            database and table optional for select which can be string or list
-            Optional where expects a map of format
-            {"column_name": {"condition": value, "value": value}}
+    def __init__(self, database, table, select=None, where=None, run_id=None):
+        """Constructor for the Query class takes
+        database and table optional for select which can be string or list
+        Optional where expects a map of format
+        {"column_name": {"condition": value, "value": value}}
         """
         self.database = database
         self.table = table
@@ -405,26 +386,30 @@ class Query:
 
     def _handle_where(self, where_conds):
         """ Method to generate where statements form map"""
-        if where_conds is not None and \
-                isinstance(where_conds, list) \
-                and len(where_conds) > 0:
+        if (
+            where_conds is not None
+            and isinstance(where_conds, list)
+            and len(where_conds) > 0
+        ):
             clause_list = []
-            condition_str = ''
+            condition_str = ""
 
             for whr in where_conds:
                 # Todo remove handle it on lambda itself.
                 # currently config(json) string escape not
                 # working as expected in lamda/stepfunction.
                 # This is a work around
-                if whr["column"] == 'run_id':
+                if whr["column"] == "run_id":
                     # Replace word 'previous' with
                     # a run_id which got generated in steprunner lambda
-                    if whr["value"] == 'previous':
+                    if whr["value"] == "previous":
                         whr["value"] = self.run_id
                     whr["value"] = "'" + whr["value"] + "'"
-                clause_list.append("{} {} {}".format(whr["column"],
-                                                     whr["condition"],
-                                                     str(whr["value"])))
+                clause_list.append(
+                    "{} {} {}".format(
+                        whr["column"], whr["condition"], str(whr["value"])
+                    )
+                )
                 condition_str = " AND ".join(clause_list).rstrip(" AND ")
             return condition_str
 
@@ -432,9 +417,11 @@ class Query:
             return None
 
     def _formulate_query(self, database, table, select, where):
-        """ Method to create the query string and set the query value
-        this is called by the constructor """
-        tmp = "SELECT {} FROM {}.{}".format(self._handle_select(select), database, table)
+        """Method to create the query string and set the query value
+        this is called by the constructor"""
+        tmp = "SELECT {} FROM {}.{}".format(
+            self._handle_select(select), database, table
+        )
         where_clause = self._handle_where(where)
         if where_clause is not None:
             tmp += " WHERE {}".format(where_clause)
