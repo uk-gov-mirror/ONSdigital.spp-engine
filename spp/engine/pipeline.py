@@ -3,8 +3,8 @@ import time
 
 import boto3
 from es_aws_functions import aws_functions
-
 from pyspark.sql import SparkSession
+from pyspark.context import SparkContext
 
 current_module = "SPP-Engine - Pipeline"
 
@@ -34,55 +34,51 @@ class PipelineMethod:
         self.module_name = module
         self.write = write
         self.params = params
-        self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
-
-        for da in data_source:
+        if data_source:
+            # legacy config was a list of dictionaries but dsml can only ever
+            # handle one with the name of df
+            da = data_source[0]
             query = None
-            if da.get("database") is not None:
-                query = Query(
-                    database=da["database"],
-                    table=da["table"],
-                    select=da["select"],
-                    where=da["where"],
-                    run_id=self.run_id,
-                )
+            # all params are now mandatory
+            query = Query(
+                database=da["database"],
+                table=da["table"],
+                select=da["select"],
+                where=da["where"],
+                run_id=self.run_id,
+            )
 
-            else:
-                query = da["path"]
+            self.data_access = DataAccess(da["name"], query, logger)
 
-            self.data_in.append(DataAccess(da["name"], query, logger))
-
-    def run(self, crawler_name, spark=None):
+    def run(self, crawler_name, spark):
         """
-        Will import the method and call it.  It will then write out the outputs
+        Will import the method and call it.  It will then write out
+        the outputs
         :param crawler_name: Name of the glue crawler
         :param spark: SparkSession builder
         :return:
         """
         self.logger.debug("Retrieving data")
-        inputs = {data.name: data.pipeline_read_data(spark) for data in self.data_in}
+        df = self.data_access.pipeline_read_data(spark)
 
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
         self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-        outputs = getattr(module, self.method_name)(**inputs, **self.params)
+        output = getattr(module, self.method_name)(df=df, **self.params)
 
         if self.write:
             if self.data_target is not None:
-                outputs = set_run_id(outputs, str(self.run_id))
+                output = set_run_id(output, str(self.run_id))
                 write_data(
-                    output=outputs,
+                    output=output,
                     data_target=self.data_target,
                     logger=self.logger,
                     spark=spark,
                 )
 
             crawl(crawler_name=crawler_name, logger=self.logger)
-
-        else:
-            return outputs
 
 
 class Pipeline:
@@ -112,8 +108,7 @@ class Pipeline:
         """
         Adds a new method to the pipeline
         :param data_source: list of Dict[String, Dict]
-        :param data_target: dictionary of string related to write.such as location,
-        format and partition column.
+        :param data_target: dictionary of string (currently just location)
         :param module: Method module name from config
         :param name: Method name from config
         :param params: Dict[String, Any]
@@ -229,7 +224,6 @@ def write_data(output, data_target, logger, spark):
     :param spark: SparkSession
     :return:
     """
-    from pyspark.context import SparkContext
     from awsglue.context import GlueContext
     from awsglue.dynamicframe import DynamicFrame
 
@@ -244,7 +238,7 @@ def write_data(output, data_target, logger, spark):
         connection_type="s3",
         connection_options={
             "path": data_target["location"],
-            "partitionKeys": data_target["partition_by"],
+            "partitionKeys": "run_id"
         },
         format="glueparquet",
         format_options={
