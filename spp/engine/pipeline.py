@@ -210,78 +210,32 @@ class DataAccess:
         self.query = query
         self.name = name
 
-    def pipeline_read_data(self, spark=None):
+    def pipeline_read_data(self, spark):
         """
-        Call spark_read
+        Call spark.sql with a query
         :param spark: SparkSession
         :return:
         """
         self.logger.debug("DataAccess: Read data using: {}".format(self.query))
-
-        if spark is not None:
-            self.logger.debug("DataAccess: Read data into spark dataframe")
-            return spark.sql(str(self.query))
+        return spark.sql(str(self.query))
 
 
-def write_data(output, data_target, logger, spark=None, counter=0):
+def write_data(output, data_target, logger, spark):
     """
-    This method may be removed as further requirements
-    determine whether this should be a generic function
+    Write data to s3
     :param data_target: target location
     :param logger: Logger object
     :param output: Dataframe
     :param spark: SparkSession
     :return:
     """
-    logger.debug("DataAccess: Write data:")
-    if spark is not None:
-        logger.debug("DataAccess: Write spark dataframe")
-        spark_write(df=output, data_target=data_target, counter=counter, logger=logger)
-        logger.debug("DataAccess: Written spark dataframe successfully")
-
-
-def set_run_id(df, run_id):
-    """
-    The purpose of this function is to set the run id in a way which
-    means that you have no idea whether the input was correct.
-    """
-    if df is not None:
-        import pyspark.sql.functions as f
-
-        columns = df.columns
-        if "run_id" in columns:
-            df = df.drop("run_id")
-
-        df = df.withColumn("run_id", f.lit(run_id))
-    return df
-
-
-def spark_write(df, data_target, counter, logger, **kwargs):
-    """
-    Writes a Spark DataFrame to a file.
-    :param counter: Int used to modify file path name if there is already a file
-    existing with the desired name
-    :param data_target: Dictionary containing information on where to save the data
-    :param df: Spark DataFrame
-    :param logger:
-    :param kwargs: Other keyword arguments to pass to df.write.save()
-    """
-    tmp_path = ""
-    if isinstance(counter, int) & (counter >= 1):
-        tmp_path = "/data" + str(counter)
-    data_target["location"] = data_target["location"] + tmp_path
-    write_spark_df_to_s3(df, data_target, logger=logger)
-    logger.debug("Writing to file location: " + data_target["location"])
-
-
-def write_spark_df_to_s3(df, data_target, logger):
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
     from awsglue.dynamicframe import DynamicFrame
 
     logger.debug(f"Writing spark dataframe to {repr(data_target)}")
     glue_context = GlueContext(SparkContext.getOrCreate())
-    dynamic_df_out = DynamicFrame.fromDF(df, glue_context, "dynamic_df_out")
+    dynamic_df_out = DynamicFrame.fromDF(output, glue_context, "dynamic_df_out")
 
     block_size = 128 * 1024 * 1024
     page_size = 1024 * 1024
@@ -300,6 +254,22 @@ def write_spark_df_to_s3(df, data_target, logger):
         },
     )
     logger.debug("write complete")
+
+
+def set_run_id(df, run_id):
+    """
+    The purpose of this function is to set the run id in a way which
+    means that you have no idea whether the input was correct.
+    """
+    if df is not None:
+        import pyspark.sql.functions as f
+
+        columns = df.columns
+        if "run_id" in columns:
+            df = df.drop("run_id")
+
+        df = df.withColumn("run_id", f.lit(run_id))
+    return df
 
 
 def construct_pipeline(config, logger):
