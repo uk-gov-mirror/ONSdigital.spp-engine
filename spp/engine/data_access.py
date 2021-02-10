@@ -58,7 +58,7 @@ def set_run_id(df, list_partition_column, run_id, is_spark):
         import pyspark.sql.functions as f
         columns = df.columns
         if 'run_id' in columns:
-            df = df.drop('run_id').withColumn('run_id', f.lit(run_id))
+            df = df.drop('run_id')
 
         df = df.withColumn('run_id', f.lit(run_id))
     return df
@@ -109,7 +109,6 @@ def write_spark_df_to_s3(df, data_target, logger):
         },
     )
     logger.debug("write complete")
-
 
 def spark_read(spark, cursor, logger, **kwargs):
     """
