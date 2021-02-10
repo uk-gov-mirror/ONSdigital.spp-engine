@@ -378,12 +378,6 @@ current_module = "SPP Engine - Query"
 
 class Query:
     """ Class to create a SQL Query string from the input parameters. """
-    database = ''
-    table = ''
-    select = None
-    where = None
-    query = ''
-    run_id = None
 
     def __init__(self, database, table, select=None,
                  where=None, run_id=None):
