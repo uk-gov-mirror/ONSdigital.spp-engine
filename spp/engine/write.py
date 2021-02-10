@@ -1,4 +1,4 @@
-current_module = "SPP Engine - Write"
+
 
 
 def spark_write(df, data_target, counter, logger, **kwargs):
@@ -17,34 +17,6 @@ def spark_write(df, data_target, counter, logger, **kwargs):
     data_target['location'] = data_target['location'] + tmp_path
     write_spark_df_to_s3(df, data_target, logger=logger)
     logger.debug("Writing to file location: " + data_target['location'])
-
-
-def pandas_write(df, data_target, logger, **kwargs):
-    """
-    Writes a Pandas DataFrame to a file.
-    :param data_target: Dictionary containing information on where to save the data
-    :param df: Pandas DataFrame
-    :param logger:
-    :param kwargs: Other keyword arguments to pass to df.to_{format}()
-    """
-    write_pandas_df_to_s3(df, data_target, logger=logger)
-    logger.debug("Writing to file location: " + data_target['location'])
-
-
-def write_pandas_df_to_s3(df, data_target, logger):
-    import awswrangler as wr
-
-    logger.debug(f"Pandas write data target {repr(data_target)}")
-
-    wr.s3.to_parquet(
-        df=df,
-        path=data_target["location"],
-        compression="snappy",
-        dataset=True,
-        partition_cols=data_target["partition_by"],
-        mode=str(data_target["save_mode"]).lower(),
-    )
-    logger.debug("Pandas write completed.")
 
 
 def write_spark_df_to_s3(df, data_target, logger):
@@ -78,5 +50,4 @@ def write_spark_df_to_s3(df, data_target, logger):
 def _get_file_format(location):
     # ToDo
     format = "parquet"
-    # return location.split('.')[-1]
     return format
