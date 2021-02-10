@@ -50,7 +50,7 @@ class PipelineMethod:
                 run_id=self.run_id,
             )
 
-            self.data_access = DataAccess(da["name"], query, logger))
+            self.data_access = DataAccess(da["name"], query, logger)
 
     def run(self, crawler_name, spark):
         """
@@ -79,9 +79,6 @@ class PipelineMethod:
                 )
 
             crawl(crawler_name=crawler_name, logger=self.logger)
-
-        else:
-            return outputs
 
 
 class Pipeline:
