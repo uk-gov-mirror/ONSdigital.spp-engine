@@ -70,10 +70,7 @@ class PipelineMethod:
 
         if self.write:
             if self.data_target is not None:
-                    outputs = set_run_id(
-                        outputs,
-                        str(self.run_id)
-                    )
+                    outputs = set_run_id(outputs, str(self.run_id))
                     write_data(
                         output=outputs,
                         data_target=self.data_target,
@@ -248,12 +245,12 @@ def write_data(output, data_target, logger,
                     logger=logger)
         logger.debug("DataAccess: Written spark dataframe successfully")
 
-def set_run_id(df, list_partition_column, run_id, is_spark):
-    '''The purpose of this function is to set the run id in a way which
+def set_run_id(df, run_id):
+    '''
+    The purpose of this function is to set the run id in a way which
     means that you have no idea whether the input was correct.
-    Of course if you don't pass a list for your partition column 
-    (which is entirely ignored otherwise) the function does nothing'''
-    if (df is not None) and (list_partition_column is not None) and is_spark:
+    '''
+    if df is not None:
         import pyspark.sql.functions as f
         columns = df.columns
         if 'run_id' in columns:
