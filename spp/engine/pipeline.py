@@ -192,6 +192,7 @@ class Pipeline:
 
         return True
 
+
 def write_data(output, data_target, logger, spark):
     """
     Write data to s3

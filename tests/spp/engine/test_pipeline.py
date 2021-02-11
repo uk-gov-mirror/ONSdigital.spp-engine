@@ -1,10 +1,12 @@
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 from es_aws_functions import general_functions
 from spp.engine.pipeline import Pipeline
 
 logger = general_functions.get_logger(survey="rsi", module_name="SPP Engine - Write",
                                       environment="sandbox", run_id="1111.2222")
+
+
 @patch('es_aws_functions.aws_functions.send_bpm_status')
 @patch('spp.engine.pipeline.PipelineMethod')
 def test_aws_big_pipeline(mock_class, mock_method):
