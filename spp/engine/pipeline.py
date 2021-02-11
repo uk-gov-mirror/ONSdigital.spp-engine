@@ -344,4 +344,4 @@ class Query:
         where_clause = self._handle_where(where)
         if where_clause is not None:
             tmp += " WHERE {}".format(where_clause)
-        self.query = tmp + ";"
+        self.query = tmp
