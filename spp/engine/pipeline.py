@@ -181,7 +181,9 @@ class Pipeline:
             # sys.exc_info
             self.logger.exception("Error running pipeline")
             self.send_status("ERROR", self.name)
+            return False
 
+        return True
 
 def write_data(output, data_target, logger, spark):
     """
