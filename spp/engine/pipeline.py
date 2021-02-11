@@ -3,10 +3,8 @@ import time
 
 import boto3
 from es_aws_functions import aws_functions
-
-from pyspark.sql import SparkSession
-from spp.engine.data_access import DataAccess, set_run_id, write_data
-from spp.utils.query import Query
+import pyspark.sql
+from pyspark.context import SparkContext
 
 current_module = "SPP-Engine - Pipeline"
 
@@ -36,78 +34,55 @@ class PipelineMethod:
         self.module_name = module
         self.write = write
         self.params = params
-        self.data_in = []
         self.run_id = run_id
         self.data_target = data_target
 
-        for da in data_source:
-            query = None
-            if da.get("database") is not None:
-                query = Query(
-                    database=da["database"],
-                    table=da["table"],
-                    select=da["select"],
-                    where=da["where"],
-                    run_id=self.run_id,
-                )
+        # legacy config was a list of dictionaries but dsml can only ever
+        # handle one with the name of df
+        da = data_source[0]
+        # all params are now mandatory
+        self.query = Query(
+            database=da["database"],
+            table=da["table"],
+            select=da["select"],
+            where=da["where"],
+            run_id=self.run_id,
+        )
 
-            else:
-                query = da["path"]
-
-            self.data_in.append(DataAccess(da["name"], query, logger))
-
-    def run(self, crawler_name, spark=None):
+    def run(self, crawler_name, spark):
         """
-        Will import the method and call it.  It will then write out the outputs
+        Will import the method and call it.  It will then write out
+        the outputs
         :param crawler_name: Name of the glue crawler
         :param spark: SparkSession builder
         :return:
         """
         self.logger.debug("Retrieving data")
-        inputs = {data.name: data.pipeline_read_data(spark) for data in self.data_in}
+        df = spark.sql(str(self.query))
 
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
         self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-        outputs = getattr(module, self.method_name)(**inputs, **self.params)
+        output = getattr(module, self.method_name)(df=df, **self.params)
 
         if self.write:
             if self.data_target is not None:
-                is_spark = True if spark is not None else False
-                if isinstance(outputs, list) or isinstance(outputs, tuple):
-                    for count, output in enumerate(outputs, start=1):
-                        # (output, data_target, spark=None,counter=None):
-                        output = set_run_id(
-                            output,
-                            self.data_target["partition_by"],
-                            str(self.run_id),
-                            is_spark
-                        )
-                        write_data(
-                            output=output,
-                            data_target=self.data_target,
-                            logger=self.logger,
-                            spark=spark,
-                            counter=count
-                        )
 
-                else:
-                    outputs = set_run_id(
-                        outputs,
-                        self.data_target["partition_by"],
-                        str(self.run_id),
-                        is_spark
-                    )
-                    write_data(
-                        output=outputs,
-                        data_target=self.data_target,
-                        logger=self.logger,
-                        spark=spark
-                    )
+                if "run_id" in output.columns:
+                    output = output.drop("run_id")
+
+                output = output.withColumn(
+                    "run_id",
+                    pyspark.sql.functions.lit(self.run_id)
+                )
+                write_data(
+                    output=output,
+                    data_target=self.data_target,
+                    logger=self.logger,
+                    spark=spark,
+                )
 
             crawl(crawler_name=crawler_name, logger=self.logger)
-        else:
-            return outputs
 
 
 class Pipeline:
@@ -115,11 +90,10 @@ class Pipeline:
     Wrapper to contain the pipeline methods and enable their calling
     """
 
-    def __init__(self, name, run_id, logger, is_spark=False, bpm_queue_url=None):
+    def __init__(self, name, run_id, logger, bpm_queue_url=None):
         """
         Initialises the attributes of the class.
         :param bpm_queue_url: String or None if there is no queue to send status to
-        :param is_spark: Boolean
         :param name: Name of pipeline run
         :param run_id: Current run id
         :param logger: the logger to use
@@ -127,13 +101,8 @@ class Pipeline:
         self.logger = logger
         self.name = name
         self.run_id = run_id
-        if is_spark:
-            self.logger.debug("Starting Spark Session for APP {}".format(name))
-            self.spark = SparkSession.builder.appName(name).getOrCreate()
-
-        else:
-            self.spark = None
-
+        self.logger.debug("Starting Spark Session for APP {}".format(name))
+        self.spark = pyspark.sql.SparkSession.builder.appName(name).getOrCreate()
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
@@ -143,8 +112,7 @@ class Pipeline:
         """
         Adds a new method to the pipeline
         :param data_source: list of Dict[String, Dict]
-        :param data_target: dictionary of string related to write.such as location,
-        format and partition column.
+        :param data_target: dictionary of string (currently just location)
         :param module: Method module name from config
         :param name: Method name from config
         :param params: Dict[String, Any]
@@ -168,7 +136,7 @@ class Pipeline:
                 data_target,
                 write,
                 self.logger,
-                params
+                params,
             )
         )
 
@@ -220,6 +188,44 @@ class Pipeline:
             # sys.exc_info
             self.logger.exception("Error running pipeline")
             self.send_status("ERROR", self.name)
+            return False
+
+        return True
+
+
+def write_data(output, data_target, logger, spark):
+    """
+    Write data to s3
+    :param data_target: target location
+    :param logger: Logger object
+    :param output: Dataframe
+    :param spark: SparkSession
+    :return:
+    """
+    from awsglue.context import GlueContext
+    from awsglue.dynamicframe import DynamicFrame
+
+    logger.debug(f"Writing spark dataframe to {repr(data_target)}")
+    glue_context = GlueContext(SparkContext.getOrCreate())
+    dynamic_df_out = DynamicFrame.fromDF(output, glue_context, "dynamic_df_out")
+
+    block_size = 128 * 1024 * 1024
+    page_size = 1024 * 1024
+    glue_context.write_dynamic_frame.from_options(
+        frame=dynamic_df_out,
+        connection_type="s3",
+        connection_options={
+            "path": data_target["location"],
+            "partitionKeys": "run_id"
+        },
+        format="glueparquet",
+        format_options={
+            "compression": "snappy",
+            "blockSize": block_size,
+            "pageSize": page_size,
+        },
+    )
+    logger.debug("write complete")
 
 
 def construct_pipeline(config, logger):
@@ -232,8 +238,7 @@ def construct_pipeline(config, logger):
         name=config["name"],
         run_id=config["run_id"],
         logger=logger,
-        is_spark=config["spark"],
-        bpm_queue_url=config.get("bpm_queue_url")
+        bpm_queue_url=config.get("bpm_queue_url"),
     )
 
     for method in config["methods"]:
@@ -248,7 +253,7 @@ def construct_pipeline(config, logger):
             data_source=method["data_access"],
             data_target=write_data_to,
             write=method["write"],
-            params=method["params"][0]
+            params=method["params"][0],
         )
 
     return pipeline
@@ -260,7 +265,83 @@ def crawl(crawler_name, logger):
     client.start_crawler(Name=crawler_name)
     while client.get_crawler(Name=crawler_name)["Crawler"]["State"] in [
         "RUNNING",
-        "STOPPING"
+        "STOPPING",
     ]:
         time.sleep(10)
     logger.debug("crawler : {}".format(crawler_name) + " completed")
+
+
+current_module = "SPP Engine - Query"
+
+
+class Query:
+    """ Class to create a SQL Query string from the input parameters. """
+
+    def __init__(self, database, table, select=None, where=None, run_id=None):
+        """Constructor for the Query class takes
+        database and table optional for select which can be string or list
+        Optional where expects a map of format
+        {"column_name": {"condition": value, "value": value}}
+        """
+        self.database = database
+        self.table = table
+        self.select = select
+        self.where = where
+        self.run_id = run_id
+        self._formulate_query(self.database, self.table, self.select, self.where)
+
+    def __str__(self):
+        return self.query
+
+    def _handle_select(self, select):
+        """ Method to generate select statements if None default to select all: '*'. """
+        if select is None:
+            sel = "*"
+        elif isinstance(select, list):
+            sel = ", ".join(select)
+        else:
+            sel = select
+        return sel
+
+    def _handle_where(self, where_conds):
+        """ Method to generate where statements form map"""
+        if (
+            where_conds is not None
+            and isinstance(where_conds, list)
+            and len(where_conds) > 0
+        ):
+            clause_list = []
+            condition_str = ""
+
+            for whr in where_conds:
+                # Todo remove handle it on lambda itself.
+                # currently config(json) string escape not
+                # working as expected in lamda/stepfunction.
+                # This is a work around
+                if whr["column"] == "run_id":
+                    # Replace word 'previous' with
+                    # a run_id which got generated in steprunner lambda
+                    if whr["value"] == "previous":
+                        whr["value"] = self.run_id
+                    whr["value"] = "'" + whr["value"] + "'"
+                clause_list.append(
+                    "{} {} {}".format(
+                        whr["column"], whr["condition"], str(whr["value"])
+                    )
+                )
+                condition_str = " AND ".join(clause_list).rstrip(" AND ")
+            return condition_str
+
+        else:
+            return None
+
+    def _formulate_query(self, database, table, select, where):
+        """Method to create the query string and set the query value
+        this is called by the constructor"""
+        tmp = "SELECT {} FROM {}.{}".format(
+            self._handle_select(select), database, table
+        )
+        where_clause = self._handle_where(where)
+        if where_clause is not None:
+            tmp += " WHERE {}".format(where_clause)
+        self.query = tmp + ";"

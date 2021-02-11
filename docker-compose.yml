@@ -4,6 +4,7 @@ volumes:
   shared-workspace:
     name: "workspace"
     driver: local
+
 services:
   python:
     build:
@@ -16,6 +17,8 @@ services:
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
       PYSPARK_PYTHON: python3
       PYSPARK_SUBMIT_ARGS: "pyspark-shell"
+    depends_on:
+      - spark
   spark:
     build:
       dockerfile: docker/images/java-spark/Dockerfile
