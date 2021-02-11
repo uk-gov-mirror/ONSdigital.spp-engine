@@ -3,7 +3,7 @@ import time
 
 import boto3
 from es_aws_functions import aws_functions
-from pyspark.sql import SparkSession
+import pyspark.sql
 from pyspark.context import SparkContext
 
 current_module = "SPP-Engine - Pipeline"
@@ -67,7 +67,14 @@ class PipelineMethod:
 
         if self.write:
             if self.data_target is not None:
-                output = set_run_id(output, str(self.run_id))
+
+                if "run_id" in output.columns:
+                    output = output.drop("run_id")
+
+                output = output.withColumn(
+                    "run_id",
+                    pyspark.sql.functions.lit(self.run_id)
+                )
                 write_data(
                     output=output,
                     data_target=self.data_target,
@@ -95,7 +102,7 @@ class Pipeline:
         self.name = name
         self.run_id = run_id
         self.logger.debug("Starting Spark Session for APP {}".format(name))
-        self.spark = SparkSession.builder.appName(name).getOrCreate()
+        self.spark = pyspark.sql.SparkSession.builder.appName(name).getOrCreate()
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
@@ -218,22 +225,6 @@ def write_data(output, data_target, logger, spark):
         },
     )
     logger.debug("write complete")
-
-
-def set_run_id(df, run_id):
-    """
-    The purpose of this function is to set the run id in a way which
-    means that you have no idea whether the input was correct.
-    """
-    if df is not None:
-        import pyspark.sql.functions as f
-
-        columns = df.columns
-        if "run_id" in columns:
-            df = df.drop("run_id")
-
-        df = df.withColumn("run_id", f.lit(run_id))
-    return df
 
 
 def construct_pipeline(config, logger):
