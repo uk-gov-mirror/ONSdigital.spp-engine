@@ -91,7 +91,12 @@ class Pipeline:
         self.name = name
         self.run_id = run_id
         self.logger.debug("Starting Spark Session for APP {}".format(name))
-        self.spark = pyspark.sql.SparkSession.builder.appName(name).getOrCreate()
+        self.spark = (
+            pyspark.sql.SparkSession.builder
+            .enableHiveSupport()
+            .appName(name)
+            .getOrCreate())
+        self.spark.sql('set spark.sql.sources.partitionOverwriteMode=dynamic')
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
