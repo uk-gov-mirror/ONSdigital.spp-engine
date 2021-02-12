@@ -70,7 +70,7 @@ class PipelineMethod:
                 output = output.withColumn(
                     "run_id",
                     pyspark.sql.functions.lit(self.run_id)
-                )
+                ).partitionBy("run_id")
                 output.write.insertInto(self.data_target['location'], overwrite=True)
 
 
