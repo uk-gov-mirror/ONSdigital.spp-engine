@@ -1,7 +1,6 @@
 import importlib
 import pyspark.sql
-from pyspark.context import SparkContext
-from es_aws_functions import aws_functions, general_functions
+from es_aws_functions import aws_functions
 
 current_module = "SPP-Engine - Pipeline"
 
@@ -72,7 +71,7 @@ class PipelineMethod:
                     "run_id",
                     pyspark.sql.functions.lit(self.run_id)
                 )
-                output.write.insertInto(data_target['location'], overwrite=True)
+                output.write.insertInto(self.data_target['location'], overwrite=True)
 
 
 class Pipeline:
