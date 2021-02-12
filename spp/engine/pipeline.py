@@ -1,10 +1,7 @@
 import importlib
-import time
-
-import boto3
-from es_aws_functions import aws_functions
 import pyspark.sql
 from pyspark.context import SparkContext
+from es_aws_functions import aws_functions, general_functions
 
 current_module = "SPP-Engine - Pipeline"
 
@@ -75,14 +72,7 @@ class PipelineMethod:
                     "run_id",
                     pyspark.sql.functions.lit(self.run_id)
                 )
-                write_data(
-                    output=output,
-                    data_target=self.data_target,
-                    logger=self.logger,
-                    spark=spark,
-                )
-
-            crawl(crawler_name=crawler_name, logger=self.logger)
+                output.write.insertInto(data_target['location'], overwrite=True)
 
 
 class Pipeline:
@@ -193,41 +183,6 @@ class Pipeline:
         return True
 
 
-def write_data(output, data_target, logger, spark):
-    """
-    Write data to s3
-    :param data_target: target location
-    :param logger: Logger object
-    :param output: Dataframe
-    :param spark: SparkSession
-    :return:
-    """
-    from awsglue.context import GlueContext
-    from awsglue.dynamicframe import DynamicFrame
-
-    logger.debug(f"Writing spark dataframe to {repr(data_target)}")
-    glue_context = GlueContext(SparkContext.getOrCreate())
-    dynamic_df_out = DynamicFrame.fromDF(output, glue_context, "dynamic_df_out")
-
-    block_size = 128 * 1024 * 1024
-    page_size = 1024 * 1024
-    glue_context.write_dynamic_frame.from_options(
-        frame=dynamic_df_out,
-        connection_type="s3",
-        connection_options={
-            "path": data_target["location"],
-            "partitionKeys": "run_id"
-        },
-        format="glueparquet",
-        format_options={
-            "compression": "snappy",
-            "blockSize": block_size,
-            "pageSize": page_size,
-        },
-    )
-    logger.debug("write complete")
-
-
 def construct_pipeline(config, logger):
     logger.info(
         "Constructing pipeline with name {}, using spark {}".format(
@@ -257,21 +212,6 @@ def construct_pipeline(config, logger):
         )
 
     return pipeline
-
-
-def crawl(crawler_name, logger):
-    logger.debug("crawler : {}".format(crawler_name) + " starts..")
-    client = boto3.client("glue", region_name="eu-west-2")
-    client.start_crawler(Name=crawler_name)
-    while client.get_crawler(Name=crawler_name)["Crawler"]["State"] in [
-        "RUNNING",
-        "STOPPING",
-    ]:
-        time.sleep(10)
-    logger.debug("crawler : {}".format(crawler_name) + " completed")
-
-
-current_module = "SPP Engine - Query"
 
 
 class Query:
