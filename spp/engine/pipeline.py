@@ -67,7 +67,7 @@ class PipelineMethod:
                 # match
                 output = spark.createDataframe(
                     output.rdd,
-                    spark.table(self.data_target["location"]).schema
+                    schema=spark.table(self.data_target["location"]).schema
                 )
                 output.write.insertInto(self.data_target['location'], overwrite=True)
 
