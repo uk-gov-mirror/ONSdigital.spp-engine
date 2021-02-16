@@ -48,7 +48,7 @@ class PipelineMethod:
         """
         self.logger.debug("Retrieving data")
         df = spark.table(self.data_source)
-        df = df.filter(df.run_id == run_id)
+        df = df.filter(df.run_id == self.run_id)
 
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
