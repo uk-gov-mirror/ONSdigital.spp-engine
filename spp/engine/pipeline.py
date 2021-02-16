@@ -63,14 +63,6 @@ class PipelineMethod:
 
         if self.write:
             if self.data_target is not None:
-
-                if "run_id" in output.columns:
-                    output = output.drop("run_id")
-
-                output = output.withColumn(
-                    "run_id",
-                    pyspark.sql.functions.lit(self.run_id)
-                )
                 output.write.insertInto(self.data_target['location'], overwrite=True)
 
 
