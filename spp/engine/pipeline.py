@@ -36,7 +36,7 @@ class PipelineMethod:
         # legacy config was a list of dictionaries but dsml can only ever
         # handle one with the name of df
         da = data_source[0]
-        self.data_source = da["database"] + '.' + da["table"],
+        self.data_source = f"{da['database']}.{da['table']}"
 
     def run(self, crawler_name, spark):
         """
@@ -46,7 +46,7 @@ class PipelineMethod:
         :param spark: SparkSession builder
         :return:
         """
-        self.logger.debug("Retrieving data")
+        self.logger.debug("Retrieving data from %r", self.data_source)
         df = spark.table(self.data_source)
         df = df.filter(df.run_id == self.run_id)
 
