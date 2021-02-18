@@ -48,8 +48,14 @@ class PipelineMethod:
         """
         self.logger.debug("Retrieving data from %r", self.data_source)
         df = spark.table(self.data_source)
+        # TODO: remove these log messages
+        self.logger.info("Retrieved %d rows of data", df.count())
         df = df.filter(df.run_id == self.run_id)
-
+        self.logger.info(
+            "After filtering by run id %r count is %d",
+            self.run_id,
+            df.count()
+        )
         self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
         self.logger.debug(f"{self.method_name} params {repr(self.params)}")
