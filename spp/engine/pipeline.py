@@ -65,7 +65,7 @@ class PipelineMethod:
             if self.data_target is not None:
                 # We need to transform our schema and hope that the datatypes
                 # match
-                output = spark.createDataframe(
+                output = spark.createDataFrame(
                     output.rdd,
                     schema=spark.table(self.data_target["location"]).schema
                 )
