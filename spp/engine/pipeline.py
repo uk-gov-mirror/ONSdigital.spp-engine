@@ -38,11 +38,10 @@ class PipelineMethod:
         da = data_source[0]
         self.data_source = f"{da['database']}.{da['table']}"
 
-    def run(self, crawler_name, spark):
+    def run(self, spark):
         """
         Will import the method and call it.  It will then write out
         the outputs
-        :param crawler_name: Name of the glue crawler
         :param spark: SparkSession builder
         :return:
         """
@@ -154,11 +153,9 @@ class Pipeline:
             total_steps=len(self.methods),
         )
 
-    def run(self, crawler_name):
+    def run(self):
         """
         Runs the methods of the pipeline
-        :param crawler_name: Name of glue crawler to run for each method
-        :param survey: Current running survey to pass to spp logger
         :return:
         """
         self.send_status("IN PROGRESS", self.name)
@@ -171,7 +168,7 @@ class Pipeline:
                 self.send_status(
                     "IN PROGRESS", method.method_name, current_step_num=step_num
                 )
-                method.run(crawler_name, self.spark)
+                method.run(self.spark)
                 self.send_status("DONE", method.method_name, current_step_num=step_num)
                 self.logger.info("Method Finished: {}".format(method.method_name))
 
