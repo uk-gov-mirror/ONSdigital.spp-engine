@@ -51,5 +51,5 @@ def test_aws_big_pipeline(mock_class, mock_method):
                                        }, True,
                                        {"param_1": "reporting_date",
                                         "param_2": "entity_name"})
-    assert test_pipeline.run(crawler_name="test-crawler")
+    assert test_pipeline.run()
     assert mock_method.called
