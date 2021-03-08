@@ -33,13 +33,12 @@ class PipelineMethod:
         self.run_id = run_id
         self.data_target = data_target
 
-        # No table will be queried if calling ingest in dsml
-        if self.method_name == "run_ingest":
+        # legacy config was a list of dictionaries but dsml can only ever
+        # handle one with the name of df
+        da = data_source[0]
+        if da['database'] == "" and da['table'] == "":
             self.data_source = None
         else:
-            # legacy config was a list of dictionaries but dsml can only ever
-            # handle one with the name of df
-            da = data_source[0]
             self.data_source = f"{da['database']}.{da['table']}"
 
     def run(self, spark):
@@ -54,7 +53,7 @@ class PipelineMethod:
             self.logger.debug(f"Importing module {self.module_name}")
             module = importlib.import_module(self.module_name)
             self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-            output = getattr(module, self.method_name)(run_id=self.run_id, **self.params)
+            output = getattr(module, self.method_name)(**self.params)
         else:
             self.logger.debug("Retrieving data from %r", self.data_source)
             df = spark.table(self.data_source)
