@@ -33,10 +33,14 @@ class PipelineMethod:
         self.run_id = run_id
         self.data_target = data_target
 
-        # legacy config was a list of dictionaries but dsml can only ever
-        # handle one with the name of df
-        da = data_source[0]
-        self.data_source = f"{da['database']}.{da['table']}"
+        # No table will be queried if calling ingest in dsml
+        if self.method_name == "run_ingest":
+            self.data_source = None
+        else:
+            # legacy config was a list of dictionaries but dsml can only ever
+            # handle one with the name of df
+            da = data_source[0]
+            self.data_source = f"{da['database']}.{da['table']}"
 
     def run(self, spark):
         """
@@ -45,20 +49,27 @@ class PipelineMethod:
         :param spark: SparkSession builder
         :return:
         """
-        self.logger.debug("Retrieving data from %r", self.data_source)
-        df = spark.table(self.data_source)
-        # TODO: remove these log messages
-        self.logger.info("Retrieved %d rows of data", df.count())
-        df = df.filter(df.run_id == self.run_id)
-        self.logger.info(
-            "After filtering by run id %r count is %d",
-            self.run_id,
-            df.count()
-        )
-        self.logger.debug(f"Importing module {self.module_name}")
-        module = importlib.import_module(self.module_name)
-        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-        output = getattr(module, self.method_name)(df=df, **self.params)
+        if self.data_source is None:
+            # Then we must be running ingest in dsml
+            self.logger.debug(f"Importing module {self.module_name}")
+            module = importlib.import_module(self.module_name)
+            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+            output = getattr(module, self.method_name)(run_id=self.run_id, **self.params)
+        else:
+            self.logger.debug("Retrieving data from %r", self.data_source)
+            df = spark.table(self.data_source)
+            # TODO: remove these log messages
+            self.logger.info("Retrieved %d rows of data", df.count())
+            df = df.filter(df.run_id == self.run_id)
+            self.logger.info(
+                "After filtering by run id %r count is %d",
+                self.run_id,
+                df.count()
+            )
+            self.logger.debug(f"Importing module {self.module_name}")
+            module = importlib.import_module(self.module_name)
+            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+            output = getattr(module, self.method_name)(df=df, **self.params)
 
         if self.write:
             if self.data_target is not None:
