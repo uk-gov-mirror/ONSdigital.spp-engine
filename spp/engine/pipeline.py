@@ -53,7 +53,7 @@ class PipelineMethod:
             self.logger.debug(f"Importing module {self.module_name}")
             module = importlib.import_module(self.module_name)
             self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-            output = getattr(module, self.method_name)(**self.params)
+            output = getattr(module, self.method_name)(spark=spark, **self.params)
         else:
             self.logger.debug("Retrieving data from %r", self.data_source)
             df = spark.table(self.data_source)
