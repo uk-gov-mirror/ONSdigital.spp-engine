@@ -60,7 +60,7 @@ class PipelineMethod:
             df = df.filter(df.run_id == self.run_id)
             if df.count() == 0:
                 raise RuntimeError(f"Found no rows for run id {self.run_id}")
-            
+
             self.logger.debug(f"Importing module {self.module_name}")
             module = importlib.import_module(self.module_name)
             self.logger.debug(f"{self.method_name} params {repr(self.params)}")
