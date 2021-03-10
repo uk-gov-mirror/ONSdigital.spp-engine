@@ -36,7 +36,10 @@ class PipelineMethod:
         # legacy config was a list of dictionaries but dsml can only ever
         # handle one with the name of df
         da = data_source[0]
-        self.data_source = f"{da['database']}.{da['table']}"
+        if da['database'] == "" and da['table'] == "":
+            self.data_source = None
+        else:
+            self.data_source = f"{da['database']}.{da['table']}"
 
     def run(self, spark):
         """
@@ -45,16 +48,23 @@ class PipelineMethod:
         :param spark: SparkSession builder
         :return:
         """
-        self.logger.debug("Retrieving data from %r", self.data_source)
-        df = spark.table(self.data_source)
-        df = df.filter(df.run_id == self.run_id)
-        if df.count() == 0:
-            raise RuntimeError(f"Found no rows for run id {self.run_id}")
-
-        self.logger.debug(f"Importing module {self.module_name}")
-        module = importlib.import_module(self.module_name)
-        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-        output = getattr(module, self.method_name)(df=df, **self.params)
+        if self.data_source is None:
+            # Then we must be running ingest in dsml
+            self.logger.debug(f"Importing module {self.module_name}")
+            module = importlib.import_module(self.module_name)
+            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+            output = getattr(module, self.method_name)(spark=spark, **self.params)
+        else:
+            self.logger.debug("Retrieving data from %r", self.data_source)
+            df = spark.table(self.data_source)
+            df = df.filter(df.run_id == self.run_id)
+            if df.count() == 0:
+                raise RuntimeError(f"Found no rows for run id {self.run_id}")
+            
+            self.logger.debug(f"Importing module {self.module_name}")
+            module = importlib.import_module(self.module_name)
+            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+            output = getattr(module, self.method_name)(df=df, **self.params)
 
         if self.write:
             if self.data_target is not None:
