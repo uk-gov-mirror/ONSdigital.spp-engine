@@ -1,86 +1,26 @@
 {
   "pipeline": {
     "name": "test_pipeline",
-    "spark": true,
-    "run_id": "000001",
+    "run_id": "0000.0001",
     "environment": "sandbox",
-    "methods": [{
-      "name": "method_a",
-      "module": "tests.test_methods.bd.big_data",
-      "data_target_prefix": "s3://dtrades-assets/workflows",
-      "data_access": [{
-        "name": "df",
-        "database": "test_db",
-        "table": "test_table",
-        "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
-        "select": [
-          "column_1",
-          "column_2"
-        ],
-        "where": [
-          {"column": "column_1",
-          "condition":  "=",
-          "value":  100}
-        ]
-      }],
-      "params": [{
-        "param_1": "col_1",
-        "param_2": "col_2",
-        "param_3": "col_3"
-      }],
-      "write": "True",
-      "data_write":[{
-        "location":"s3://dtrades-assets/workflows",
-        "format":"parquet",
-        "save_mode":"append",
-      "partition_by":["run_id"]
-      }]
+    "methods": [
+        {
+        "name": "method_a",
+        "module": "tests.test_methods.bd.big_data",
+
+        "data_source": "test.tab1",
+        "params": {
+            "param_1": "col_1",
+            "param_2": "col_2",
+            "param_3": "col_3"
+        },
+        "data_target": "test.tab2"
     },
-      {
+    {
         "name": "method_b",
         "module": "tests.test_methods.bd.big_data",
-        "data_target_prefix": "s3://dtrades-assets/workflows",
-        "data_access": [{
-          "name": "df_1",
-          "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy.json",
-          "database": "test_db_1",
-          "table": "test_table_1",
-          "select": [
-            "column_1",
-            "column_2"
-          ],
-          "where": [
-            {"column": "column_1",
-              "condition":  "=",
-              "value":  100}
-          ]
-        },
-          {
-            "name": "df_2",
-            "path": "C:\\git_vs\\spp-engine\\tests\\resources\\data\\dummy2.json",
-            "database": "test_db_2",
-            "table": "test_table_2",
-            "select": [
-              "column_1",
-              "column_2"
-            ],
-            "where": [
-              {"column": "column_2",
-                "condition":  "<",
-                "value":  500}
-            ]
-          }],
-        "params": [{
-          "param_1": "reporting_date",
-          "param_2": "entity_name"
-        }],
-        "write": "True",
-        "data_write":[{
-          "location":"s3://dtrades-assets/workflows",
-          "format":"parquet",
-          "save_mode":"append",
-          "partition_by":["run_id"]
-        }]
+        "data_source": "test.tab2",
+        "data_target": "test.tab3"
       }]
   }
 }
