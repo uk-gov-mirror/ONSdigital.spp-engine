@@ -12,7 +12,15 @@ class PipelineMethod:
     """
 
     def __init__(
-        self, run_id, name, module, data_source, data_target, write, logger, params=None
+        self,
+        run_id,
+        name,
+        module,
+        data_source,
+        data_target,
+        logger,
+        params=None,
+        provide_session=False,
     ):
         """
         Initialise the attributes of the class
@@ -28,18 +36,18 @@ class PipelineMethod:
         self.logger = logger
         self.method_name = name
         self.module_name = module
-        self.write = write
-        self.params = params
-        self.run_id = run_id
-        self.data_target = data_target
+        if params is not None:
+            if not isinstance(params, dict):
+                raise TypeError(f"params must be None or dict not {type(params)}")
+            self.params = params
 
-        # legacy config was a list of dictionaries but dsml can only ever
-        # handle one with the name of df
-        da = data_source[0]
-        if da['database'] == "" and da['table'] == "":
-            self.data_source = None
         else:
-            self.data_source = f"{da['database']}.{da['table']}"
+            self.params = {}
+
+        self.run_id = run_id
+        self.data_source = data_source
+        self.data_target = data_target
+        self.provide_session = provide_session
 
     def run(self, spark):
         """
@@ -48,33 +56,28 @@ class PipelineMethod:
         :param spark: SparkSession builder
         :return:
         """
-        if self.data_source is None:
-            # Then we must be running ingest in dsml
-            self.logger.debug(f"Importing module {self.module_name}")
-            module = importlib.import_module(self.module_name)
-            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-            output = getattr(module, self.method_name)(spark=spark, **self.params)
-        else:
+        if self.provide_session:
+            self.params["spark"] = spark
+
+        if self.data_source is not None:
             self.logger.debug("Retrieving data from %r", self.data_source)
             df = spark.table(self.data_source)
             df = df.filter(df.run_id == self.run_id)
             if df.count() == 0:
                 raise RuntimeError(f"Found no rows for run id {self.run_id}")
 
-            self.logger.debug(f"Importing module {self.module_name}")
-            module = importlib.import_module(self.module_name)
-            self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-            output = getattr(module, self.method_name)(df=df, **self.params)
+        self.logger.debug(f"Importing module {self.module_name}")
+        module = importlib.import_module(self.module_name)
+        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
+        self.params["df"] = df
+        output = getattr(module, self.method_name)(**self.params)
 
-        if self.write:
-            if self.data_target is not None:
-                # We need to transform our schema and hope that the datatypes
-                # match
+        if self.data_target is not None:
+            # We need to transform our schema and hope that the datatypes
+            # match
 
-                output = output.select(
-                    spark.table(self.data_target["location"]).columns
-                )
-                output.write.insertInto(self.data_target['location'], overwrite=True)
+            output = output.select(spark.table(self.data_target).columns)
+            output.write.insertInto(self.data_target["location"], overwrite=True)
 
 
 class Pipeline:
@@ -95,17 +98,17 @@ class Pipeline:
         self.run_id = run_id
         self.logger.debug("Starting Spark Session for APP {}".format(name))
         self.spark = (
-            pyspark.sql.SparkSession.builder
-            .enableHiveSupport()
+            pyspark.sql.SparkSession.builder.enableHiveSupport()
             .appName(name)
-            .getOrCreate())
-        self.spark.sql('SET spark.sql.sources.partitionOverwriteMode=dynamic')
-        self.spark.sql('SET hive.exec.dynamic.partition.mode=nonstrict')
+            .getOrCreate()
+        )
+        self.spark.sql("SET spark.sql.sources.partitionOverwriteMode=dynamic")
+        self.spark.sql("SET hive.exec.dynamic.partition.mode=nonstrict")
         self.bpm_queue_url = bpm_queue_url
         self.methods = []
 
     def add_pipeline_methods(
-        self, run_id, name, module, data_source, data_target, write, params
+        self, run_id, name, module, data_source, data_target, params, provide_session
     ):
         """
         Adds a new method to the pipeline
@@ -115,16 +118,11 @@ class Pipeline:
         :param name: Method name from config
         :param params: Dict[String, Any]
         :param run_id: run_id - String
-        :param write: Whether or not to write the data - Boolean
+        :param provide_session: Whether to provide the session object - Boolean
         :param logger: logger to use
         :return:
         """
-        self.logger.debug(
-            "Adding Method: {} , from Module {}, With parameters {}, "
-            "retrieving data from {}, writing to {}.".format(
-                name, module, params, data_source, repr(data_target)
-            )
-        )
+
         self.methods.append(
             PipelineMethod(
                 run_id,
@@ -132,9 +130,9 @@ class Pipeline:
                 module,
                 data_source,
                 data_target,
-                write,
                 self.logger,
                 params,
+                provide_session,
             )
         )
 
@@ -190,11 +188,7 @@ class Pipeline:
 
 
 def construct_pipeline(config, logger):
-    logger.info(
-        "Constructing pipeline with name {}, using spark {}".format(
-            config["name"], config["spark"]
-        )
-    )
+    logger.info(f"Constructing pipeline {config['name']}")
     pipeline = Pipeline(
         name=config["name"],
         run_id=config["run_id"],
@@ -203,18 +197,14 @@ def construct_pipeline(config, logger):
     )
 
     for method in config["methods"]:
-        if method["write"]:
-            write_data_to = method["data_write"][0]
-        else:
-            write_data_to = None
         pipeline.add_pipeline_methods(
             run_id=config["run_id"],
             name=method["name"],
             module=method["module"],
-            data_source=method["data_access"],
-            data_target=write_data_to,
-            write=method["write"],
-            params=method["params"][0],
+            data_source=method.get("data_source"),
+            data_target=method.get("data_target"),
+            params=method.get("params"),
+            provide_session=method.get("provide_session", False),
         )
 
     return pipeline

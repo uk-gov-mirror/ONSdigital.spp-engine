@@ -13,9 +13,6 @@ logger = general_functions.get_logger(
 with open("./tests/resources/config/test_bd_pipeline.json") as f:
     test_bd_json = json.load(f)
 
-with open("./tests/resources/config/test_sd_pipeline.json") as f:
-    test_sd_json = json.load(f)
-
 
 def test_parse_config_bd():
     pipeline = construct_pipeline(test_bd_json['pipeline'], logger)
@@ -33,9 +30,4 @@ def test_parse_config_bd():
 
     assert pipeline.methods[1].module_name == 'tests.test_methods.bd.big_data'
     assert pipeline.methods[1].method_name == 'method_b'
-    assert pipeline.methods[1].params == {
-        "param_1": "reporting_date",
-        "param_2": "entity_name"
-    }
-
-    # TODO: Add DataAccess parsing
+    assert pipeline.methods[1].params == {}
