@@ -56,6 +56,7 @@ class PipelineMethod:
         :param spark: SparkSession builder
         :return:
         """
+        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
         if self.provide_session:
             self.params["spark"] = spark
 
@@ -65,11 +66,9 @@ class PipelineMethod:
             df = df.filter(df.run_id == self.run_id)
             if df.count() == 0:
                 raise RuntimeError(f"Found no rows for run id {self.run_id}")
+            self.params["df"] = df
 
-        self.logger.debug(f"Importing module {self.module_name}")
         module = importlib.import_module(self.module_name)
-        self.logger.debug(f"{self.method_name} params {repr(self.params)}")
-        self.params["df"] = df
         output = getattr(module, self.method_name)(**self.params)
 
         if self.data_target is not None:
