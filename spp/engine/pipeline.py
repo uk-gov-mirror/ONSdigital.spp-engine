@@ -76,7 +76,7 @@ class PipelineMethod:
             # match
 
             output = output.select(spark.table(self.data_target).columns)
-            output.write.insertInto(self.data_target["location"], overwrite=True)
+            output.write.insertInto(self.data_target, overwrite=True)
 
 
 class Pipeline:
